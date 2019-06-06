@@ -4,3 +4,8 @@
 
 \build
 \install
+
+.ccls-cache/
+.vscode/
+cbuild/
+compile_commands.json

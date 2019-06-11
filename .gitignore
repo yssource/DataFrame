@@ -6,6 +6,7 @@
 \install
 
 .ccls-cache/
+.mypy_cache/
 .vscode/
-cbuild/
+*[b|B]uild/
 compile_commands.json

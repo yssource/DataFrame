@@ -6,12 +6,10 @@
 #pragma once
 
 #include <DataFrame/DataFrame.h>
+
 #include <cstddef>
 #include <algorithm>
-#include <limits>
 #include <numeric>
-#include <type_traits>
-#include <array>
 
 // ----------------------------------------------------------------------------
 
@@ -34,7 +32,7 @@ struct MeanVisitor {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     inline void operator() (const index_type &, const value_type &val)  {
@@ -46,7 +44,7 @@ struct MeanVisitor {
     }
     inline void pre ()  { mean_ = 0; cnt_ = 0; }
     inline void post ()  {  }
-    inline count_type get_count () const  { return (cnt_); }
+    inline size_type get_count () const  { return (cnt_); }
     inline value_type get_sum () const  { return (mean_); }
     inline result_type get_result () const  {
 
@@ -56,7 +54,7 @@ struct MeanVisitor {
 private:
 
     value_type  mean_ { 0 };
-    count_type  cnt_ { 0 };
+    size_type   cnt_ { 0 };
 };
 
 // ----------------------------------------------------------------------------
@@ -69,7 +67,7 @@ struct SumVisitor {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     inline void operator() (const index_type &, const value_type &val)  {
@@ -89,12 +87,40 @@ private:
 
 // ----------------------------------------------------------------------------
 
+template<typename T,
+         typename I = unsigned long,
+         typename =
+             typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+struct ProdVisitor {
+
+    using value_type = T;
+    using index_type = I;
+    using size_type = std::size_t;
+    using result_type = T;
+
+    inline void operator() (const index_type &, const value_type &val)  {
+
+        if (is_nan__(val))  return;
+
+        prod_ *= val;
+    }
+    inline void pre ()  { prod_ = 1; }
+    inline void post ()  {  }
+    inline result_type get_result () const  { return (prod_); }
+
+private:
+
+    value_type  prod_ { 1 };
+};
+
+// ----------------------------------------------------------------------------
+
 template<typename T, typename I = unsigned long>
 struct MaxVisitor {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     inline void operator() (const index_type &idx, const value_type &val)  {
@@ -126,7 +152,7 @@ struct MinVisitor {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     inline void operator() (const index_type &idx, const value_type &val)  {
@@ -166,7 +192,7 @@ struct  NLargestVisitor {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
 
     struct  DataItem  {
         value_type  value { };
@@ -216,7 +242,7 @@ struct  NLargestVisitor {
 private:
 
     result_type items_ { };
-    count_type  counter_ { 0 };
+    size_type   counter_ { 0 };
     int         min_index_ { -1 };
 };
 
@@ -235,7 +261,7 @@ struct  NSmallestVisitor {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
 
     struct  DataItem  {
         value_type  value { };
@@ -285,7 +311,7 @@ struct  NSmallestVisitor {
 private:
 
     result_type items_ { };
-    count_type  counter_ { 0 };
+    size_type   counter_ { 0 };
     int         max_index_ { -1 };
 };
 
@@ -299,7 +325,7 @@ struct CovVisitor {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     explicit CovVisitor (bool bias = true) : b_ (bias) {  }
@@ -352,7 +378,7 @@ private:
     value_type  dot_prod_ { 0 };
     value_type  dot_prod1_ { 0 };
     value_type  dot_prod2_ { 0 };
-    count_type  cnt_ { 0 };
+    size_type   cnt_ { 0 };
     const bool  b_;
 };
 
@@ -366,7 +392,7 @@ struct VarVisitor  {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     explicit VarVisitor (bool bias = true) : cov_ (bias)  {   }
@@ -393,7 +419,7 @@ struct BetaVisitor  {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     explicit BetaVisitor (bool bias = true) : cov_ (bias)  {   }
@@ -427,7 +453,7 @@ struct StdVisitor   {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     explicit StdVisitor (bool bias = true) : var_ (bias)  {   }
@@ -457,7 +483,7 @@ struct TrackingErrorVisitor {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     explicit TrackingErrorVisitor (bool bias = true) : std_ (bias) {  }
@@ -488,7 +514,7 @@ public:
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     explicit CorrVisitor (bool bias = true) : cov_ (bias)  {   }
@@ -513,9 +539,325 @@ private:
 
 // ----------------------------------------------------------------------------
 
+template<typename T,
+         typename I = unsigned long,
+         typename =
+             typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+struct DotProdVisitor  {
+
+    using value_type = T;
+    using index_type = I;
+    using size_type = std::size_t;
+    using result_type = T;
+
+    inline void operator() (const index_type &idx,
+                            const value_type &val1,
+                            const value_type &val2)  {
+
+        dot_prod_ += (val1 * val2);
+    }
+    inline void pre ()  { dot_prod_ = value_type(0); }
+    inline void pro ()  {  }
+    inline result_type get_result () const  { return (dot_prod_); }
+
+private:
+
+    result_type dot_prod_ { 0 };
+};
+
+// ----------------------------------------------------------------------------
+
+// One-pass stats calculation.
+//
+template<typename T,
+         typename I = unsigned long,
+         typename =
+             typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+struct StatsVisitor  {
+
+    using value_type = T;
+    using index_type = I;
+    using size_type = std::size_t;
+    using result_type = T;
+
+    inline void operator() (const index_type &idx, const value_type &val)  {
+
+        if (is_nan__(val))  return;
+
+        value_type  delta, delta_n, delta_n2, term1;
+        size_type   n1 = n_;
+
+        n_ += 1;
+        delta = val - m1_;
+        delta_n = delta / value_type(n_);
+        delta_n2 = delta_n * delta_n;
+        term1 = delta * delta_n * value_type(n1);
+        m1_ += delta_n;
+        m4_ += term1 * delta_n2 * value_type(n_ * n_ - 3 * n_ + 3) +
+               6.0 * delta_n2 * m2_ -
+               4.0 * delta_n * m3_;
+        m3_ += term1 * delta_n * value_type(n_ - 2) - 3.0 * delta_n * m2_;
+        m2_ += term1;
+    }
+    inline void pre ()  {
+
+        n_ = 0;
+        m1_ = m2_ = m3_ = m4_ = value_type(0);
+    }
+    inline void post ()  {  }
+
+    inline size_type get_count () const { return (n_); }
+    inline result_type get_mean () const  { return (m1_); }
+    inline result_type
+    get_variance () const  { return (m2_ / (value_type(n_) - 1.0)); }
+    inline result_type get_std () const  { return (::sqrt(get_variance())); }
+    inline result_type get_skew () const  {
+
+        return (::sqrt(n_) * m3_ / ::pow(m2_, 1.5));
+    }
+    inline result_type get_kurtosis () const  {
+
+        return (value_type(n_) * m4_ / (m2_ * m2_) - 3.0);
+    }
+
+private:
+
+    size_type   n_ { 0 };
+    value_type  m1_ { 0 };
+    value_type  m2_ { 0 };
+    value_type  m3_ { 0 };
+    value_type  m4_ { 0 };
+};
+
+// ----------------------------------------------------------------------------
+
+// One pass simple linear regression
+//
+template<typename T,
+         typename I = unsigned long,
+         typename =
+             typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+struct SLRegressionVisitor  {
+
+public:
+
+    using value_type = T;
+    using index_type = I;
+    using size_type = std::size_t;
+    using result_type = T;
+
+    inline void operator() (const index_type &idx,
+                            const value_type &x,
+                            const value_type &y)  {
+
+        if (is_nan__(x) || is_nan__(y))  return;
+
+        s_xy_ += (x_stats_.get_mean() - x) *
+                 (y_stats_.get_mean() - y) *
+                 value_type(n_) / value_type(n_ + 1);
+
+        x_stats_(idx, x);
+        y_stats_(idx, y);
+        n_ += 1;
+    }
+    inline void pre ()  {
+
+        n_ = 0;
+        s_xy_ = 0;
+        x_stats_.pre();
+        y_stats_.pre();
+    }
+    inline void post ()  {  }
+
+    inline size_type get_count () const { return (n_); }
+    inline result_type get_slope () const  {
+
+        // Sum of the squares of the difference between each x and
+        // the mean x value.
+        const value_type    s_xx =
+            x_stats_.get_variance() * value_type(n_ - 1);
+
+        return (s_xy_ / s_xx);
+    }
+    inline result_type get_intercept () const  {
+
+        return (y_stats_.get_mean() - get_slope() * x_stats_.get_mean());
+    }
+    inline result_type get_corr () const  {
+
+        const value_type    t = x_stats_.get_std() * y_stats_.get_std();
+
+        return (s_xy_ / (value_type(n_ - 1) * t));
+    }
+
+private:
+
+    size_type                               n_ { 0 };
+
+    // Sum of the product of the difference between x and its mean and
+    // the difference between y and its mean.
+    value_type                              s_xy_ { 0 };
+    StatsVisitor<value_type, index_type>    x_stats_;
+    StatsVisitor<value_type, index_type>    y_stats_;
+};
+
+// ----------------------------------------------------------------------------
+
 //
 // Single Action Visitors
 //
+
+template<typename T,
+         typename I = unsigned long,
+         typename =
+             typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+struct CumSumVisitor {
+
+    using value_type = T;
+    using index_type = I;
+    using size_type = std::size_t;
+    using result_type = std::vector<value_type>;
+
+    inline void
+    operator() (const std::vector<index_type> &,
+                const std::vector<value_type> &column)  {
+
+        value_type  running_sum = 0;
+
+        sum_.reserve(column.size());
+        for (const auto citer : column)  {
+            if (! is_nan__(citer))  {
+                running_sum += citer;
+                sum_.push_back(running_sum);
+            }
+            else
+                sum_.push_back(citer);
+        }
+    }
+    inline void pre ()  { sum_.clear(); }
+    inline void post ()  {  }
+    inline const result_type &get_result () const  { return (sum_); }
+
+private:
+
+    std::vector<value_type> sum_ {  };
+};
+
+// ----------------------------------------------------------------------------
+
+template<typename T,
+         typename I = unsigned long,
+         typename =
+             typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
+struct CumProdVisitor {
+
+    using value_type = T;
+    using index_type = I;
+    using size_type = std::size_t;
+    using result_type = std::vector<value_type>;
+
+    inline void
+    operator() (const std::vector<index_type> &,
+                const std::vector<value_type> &column)  {
+
+        value_type  running_prod = 1;
+
+        prod_.reserve(column.size());
+        for (const auto citer : column)  {
+            if (! is_nan__(citer))  {
+                running_prod *= citer;
+                prod_.push_back(running_prod);
+            }
+            else
+                prod_.push_back(citer);
+        }
+    }
+    inline void pre ()  { prod_.clear(); }
+    inline void post ()  {  }
+    inline const result_type &get_result () const  { return (prod_); }
+
+private:
+
+    std::vector<value_type> prod_ {  };
+};
+
+// ----------------------------------------------------------------------------
+
+template<typename T, typename I = unsigned long>
+struct CumMaxVisitor {
+
+    using value_type = T;
+    using index_type = I;
+    using size_type = std::size_t;
+    using result_type = std::vector<value_type>;
+
+    inline void
+    operator() (const std::vector<index_type> &,
+                const std::vector<value_type> &column)  {
+
+        if (column.empty())  return;
+
+        value_type  running_max = column[0];
+
+        max_.reserve(column.size());
+        for (const auto citer : column)  {
+            if (! is_nan__(citer))  {
+                if (citer > running_max)
+                    running_max = citer;
+                max_.push_back(running_max);
+            }
+            else
+                max_.push_back(citer);
+        }
+    }
+    inline void pre ()  { max_.clear(); }
+    inline void post ()  {  }
+    inline const result_type &get_result () const  { return (max_); }
+
+private:
+
+    std::vector<value_type> max_ {  };
+};
+
+// ----------------------------------------------------------------------------
+
+template<typename T, typename I = unsigned long>
+struct CumMinVisitor {
+
+    using value_type = T;
+    using index_type = I;
+    using size_type = std::size_t;
+    using result_type = std::vector<value_type>;
+
+    inline void
+    operator() (const std::vector<index_type> &,
+                const std::vector<value_type> &column)  {
+
+        if (column.empty())  return;
+
+        value_type  running_min = column[0];
+
+        min_.reserve(column.size());
+        for (const auto citer : column)  {
+            if (! is_nan__(citer))  {
+                if (citer < running_min)
+                    running_min = citer;
+                min_.push_back(running_min);
+            }
+            else
+                min_.push_back(citer);
+        }
+    }
+    inline void pre ()  { min_.clear(); }
+    inline void post ()  {  }
+    inline const result_type &get_result () const  { return (min_); }
+
+private:
+
+    std::vector<value_type> min_ {  };
+};
+
+// ----------------------------------------------------------------------------
 
 template<typename T,
          typename I = unsigned long,
@@ -527,7 +869,7 @@ public:
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = std::vector<value_type>;
 
     AutoCorrVisitor () = default;
@@ -535,15 +877,15 @@ public:
     operator() (const std::vector<index_type> &idx,
                 const std::vector<value_type> &column)  {
 
-        const count_type    col_len = column.size();
+        const size_type col_len = column.size();
 
         if (col_len <= 4)  return;
 
         std::vector<value_type>               tmp_result(col_len - 4);
-        count_type                            lag = 1;
+        size_type                             lag = 1;
         std::vector<std::future<CorrResult>>  futures(
             ThreadGranularity::get_thread_level());
-        count_type                            thread_count = 0;
+        size_type                             thread_count = 0;
 
         tmp_result[0] = 1.0;
         while (lag < col_len - 4)  {
@@ -565,7 +907,7 @@ public:
             lag += 1;
         }
 
-        for (count_type i = 0; i < thread_count; ++i)  {
+        for (size_type i = 0; i < thread_count; ++i)  {
             const auto  &result = futures[i].get();
 
             tmp_result[result.first] = result.second;
@@ -580,17 +922,17 @@ private:
 
     result_type result_ {  };
 
-    using CorrResult = std::pair<count_type, value_type>;
+    using CorrResult = std::pair<size_type, value_type>;
 
     inline CorrResult
-    get_auto_corr_(count_type col_len,
-                   count_type lag,
+    get_auto_corr_(size_type col_len,
+                   size_type lag,
                    const std::vector<value_type> &column) const  {
 
         CorrVisitor<value_type, index_type> corr {  };
 
         corr.pre();
-        for (count_type i = 0; i < col_len - lag; ++i)
+        for (size_type i = 0; i < col_len - lag; ++i)
             corr (I(), column[i], column[i + lag]);
 
         return (CorrResult(lag, corr.get_result()));
@@ -607,14 +949,14 @@ struct ReturnVisitor  {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = std::vector<value_type>;
 
     inline ReturnVisitor (return_policy rp) : ret_p_(rp)  {   }
     inline void operator() (const std::vector<index_type> &idx,
                             const std::vector<value_type> &column)  {
 
-        const count_type    col_len = column.size();
+        const size_type col_len = column.size();
 
         if (col_len < 3)  return;
 
@@ -675,10 +1017,10 @@ struct KthValueVisitor  {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
-    inline KthValueVisitor (count_type ke) : kth_element_(ke)  {   }
+    inline KthValueVisitor (size_type ke) : kth_element_(ke)  {   }
     inline void
     operator() (const std::vector<index_type> &idx,
                 const std::vector<value_type> &column)  {
@@ -692,15 +1034,15 @@ struct KthValueVisitor  {
 
 private:
 
-    result_type         result_ {  };
-    const count_type    kth_element_;
+    result_type     result_ {  };
+    const size_type kth_element_;
 
     inline value_type
     find_kth_element_ (typename std::vector<value_type>::const_iterator begin,
                        typename std::vector<value_type>::const_iterator end,
-                       count_type k) const  {
+                       size_type k) const  {
 
-        const count_type    vec_size = static_cast<count_type>(end - begin);
+        const size_type vec_size = static_cast<size_type>(end - begin);
 
         if (k > vec_size || k <= 0)  {
             char    err[512];
@@ -717,8 +1059,8 @@ private:
 
         std::vector<value_type> tmp_vec (vec_size - 1);
         value_type              kth_value = *(begin + (vec_size / 2));
-        count_type              less_count = 0;
-        count_type              great_count = vec_size - 2;
+        size_type               less_count = 0;
+        size_type               great_count = vec_size - 2;
 
         for (auto citer = begin; citer < end; ++citer)  {
             if (is_nan__(*citer))  continue;
@@ -752,7 +1094,7 @@ struct MedianVisitor  {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
+    using size_type = std::size_t;
     using result_type = T;
 
     MedianVisitor () = default;
@@ -760,7 +1102,7 @@ struct MedianVisitor  {
     operator() (const std::vector<index_type> &idx,
                 const std::vector<value_type> &column)  {
 
-        const count_type                        vec_size = column.size();
+        const size_type                         vec_size = column.size();
         KthValueVisitor<value_type, index_type> kv_visitor (vec_size >> 1);
 
 
@@ -786,166 +1128,101 @@ private:
 
 // ----------------------------------------------------------------------------
 
-template<typename T,
-         typename I = unsigned long,
-         typename =
-             typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
-struct DotProdVisitor  {
-
-    using value_type = T;
-    using index_type = I;
-    using count_type = std::size_t;
-    using result_type = T;
-
-    inline void operator() (const index_type &idx,
-                            const value_type &val1,
-                            const value_type &val2)  {
-
-        dot_prod_ += (val1 * val2);
-    }
-    inline void pre ()  { dot_prod_ = value_type(0); }
-    inline void pro ()  {  }
-    inline result_type get_result () const  { return (dot_prod_); }
-
-private:
-
-    result_type dot_prod_ { 0 };
-};
-
-// ----------------------------------------------------------------------------
-
-// One-pass stats calculation.
+// Mode of a vector is a value that appears most often in the vector.
+// This visitor extracts the top N repeated values in the column with the
+// associated indices.
+// The T type must be hashable
+// Because of the information this has to return, it is not a cheap operation
 //
-template<typename T,
-         typename I = unsigned long,
-         typename =
-             typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
-struct StatsVisitor  {
+template<std::size_t N, typename T, typename I = unsigned long>
+struct  ModeVisitor {
 
     using value_type = T;
     using index_type = I;
-    using count_type = std::size_t;
-    using result_type = T;
+    using size_type = std::size_t;
 
-    inline void operator() (const index_type &idx, const value_type &val)  {
+    struct  DataItem  {
+        // Value of the column item
+        value_type              value { };
+        // List of indices where value occurred
+        std::vector<index_type> indices { };
+        // Number of times value occurred
+        inline size_type repeat_count() const  { return (indices.size()); }
+        // List of column indices where value occurred
+        std::vector<size_type>  value_indices_in_col {  };
 
-        if (is_nan__(val))  return;
+        DataItem() = default;
+        inline DataItem(value_type v) : value(v)  {
+            indices.reserve(4);
+            value_indices_in_col.reserve(4);
+        }
+    };
 
-        value_type  delta, delta_n, delta_n2, term1;
-        count_type  n1 = n_;
+    using result_type = std::array<DataItem, N>;
 
-        n_ += 1;
-        delta = val - m1_;
-        delta_n = delta / value_type(n_);
-        delta_n2 = delta_n * delta_n;
-        term1 = delta * delta_n * value_type(n1);
-        m1_ += delta_n;
-        m4_ += term1 * delta_n2 * value_type(n_ * n_ - 3 * n_ + 3) +
-               6.0 * delta_n2 * m2_ -
-               4.0 * delta_n * m3_;
-        m3_ += term1 * delta_n * value_type(n_ - 2) - 3.0 * delta_n * m2_;
-        m2_ += term1;
+    inline void
+    operator() (const std::vector<index_type> &idx,
+                const std::vector<value_type> &column)  {
+
+        DataItem                                    nan_item(
+            std::numeric_limits<value_type>::quiet_NaN());
+        const size_type                             col_size = column.size();
+        std::unordered_map<value_type, DataItem>    val_map (col_size);
+
+        for (size_type i = 0; i < col_size; ++i)  {
+            if (is_nan__(column[i]))  {
+                nan_item.indices.push_back(idx[i]);
+                nan_item.value_indices_in_col.push_back(i);
+            }
+            else  {
+                auto    ret =
+                    val_map.emplace(
+                        std::pair<value_type, DataItem>(
+                            column[i], DataItem(column[i])));
+
+                ret.first->second.indices.push_back(idx[i]);
+                ret.first->second.value_indices_in_col.push_back(i);
+            }
+        }
+
+        std::vector<DataItem> val_vec;
+
+        val_vec.reserve(val_map.size() + 1);
+        val_vec.push_back(nan_item);
+        std::for_each(val_map.begin(),
+                      val_map.end(),
+                      [&val_vec](const auto &map_pair) -> void {
+                          val_vec.push_back(map_pair.second);
+                      });
+        std::sort(val_vec.begin(), val_vec.end(),
+                  [](const DataItem &lhs, const DataItem &rhs) -> bool  {
+                      return (lhs.repeat_count() > rhs.repeat_count()); // dec
+                  });
+        for (size_type i = 0; i < N && i < val_vec.size(); ++i)
+            items_[i] = val_vec[i];
     }
-    inline void pre ()  {
-
-        n_ = 0;
-        m1_ = m2_ = m3_ = m4_ = value_type(0);
-    }
+    inline void pre ()  { result_type x; items_.swap (x); }
     inline void post ()  {  }
+    inline const result_type &get_result () const  { return (items_); }
 
-    inline count_type get_count () const { return (n_); }
-    inline result_type get_mean () const  { return (m1_); }
-    inline result_type
-    get_variance () const  { return (m2_ / (value_type(n_) - 1.0)); }
-    inline result_type get_std () const  { return (::sqrt(get_variance())); }
-    inline result_type get_skew () const  {
+    inline void sort_by_repeat_count()  {
 
-        return (::sqrt(n_) * m3_ / ::pow(m2_, 1.5));
+        std::sort(items_.begin(), items_.end(),
+                  [](const DataItem &lhs, const DataItem &rhs) -> bool  {
+                      return (lhs.repeat_count() < rhs.repeat_count());
+                  });
     }
-    inline result_type get_kurtosis () const  {
+    inline void sort_by_value()  {
 
-        return (value_type(n_) * m4_ / (m2_ * m2_) - 3.0);
+        std::sort(items_.begin(), items_.end(),
+                  [](const DataItem &lhs, const DataItem &rhs) -> bool  {
+                      return (lhs.value < rhs.value);
+                  });
     }
 
 private:
 
-    count_type  n_ { 0 };
-    value_type  m1_ { 0 };
-    value_type  m2_ { 0 };
-    value_type  m3_ { 0 };
-    value_type  m4_ { 0 };
-};
-
-// ----------------------------------------------------------------------------
-
-// One pass simple linear regression
-//
-template<typename T,
-         typename I = unsigned long,
-         typename =
-             typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
-struct SLRegressionVisitor  {
-
-public:
-
-    using value_type = T;
-    using index_type = I;
-    using count_type = std::size_t;
-    using result_type = T;
-
-    inline void operator() (const index_type &idx,
-                            const value_type &x,
-                            const value_type &y)  {
-
-        if (is_nan__(x) || is_nan__(y))  return;
-
-        s_xy_ += (x_stats_.get_mean() - x) *
-                 (y_stats_.get_mean() - y) *
-                 value_type(n_) / value_type(n_ + 1);
-
-        x_stats_(idx, x);
-        y_stats_(idx, y);
-        n_ += 1;
-    }
-    inline void pre ()  {
-
-        n_ = 0;
-        s_xy_ = 0;
-        x_stats_.pre();
-        y_stats_.pre();
-    }
-    inline void post ()  {  }
-
-    inline count_type get_count () const { return (n_); }
-    inline result_type get_slope () const  {
-
-        // Sum of the squares of the difference between each x and
-        // the mean x value.
-        const value_type    s_xx =
-            x_stats_.get_variance() * value_type(n_ - 1);
-
-        return (s_xy_ / s_xx);
-    }
-    inline result_type get_intercept () const  {
-
-        return (y_stats_.get_mean() - get_slope() * x_stats_.get_mean());
-    }
-    inline result_type get_corr () const  {
-
-        const value_type    t = x_stats_.get_std() * y_stats_.get_std();
-
-        return (s_xy_ / (value_type(n_ - 1) * t));
-    }
-
-private:
-
-    count_type                              n_ { 0 };
-
-    // Sum of the product of the difference between x and its mean and
-    // the difference between y and its mean.
-    value_type                              s_xy_ { 0 };
-    StatsVisitor<value_type, index_type>    x_stats_;
-    StatsVisitor<value_type, index_type>    y_stats_;
+    result_type items_ { };
 };
 
 // ----------------------------------------------------------------------------

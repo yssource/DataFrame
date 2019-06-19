@@ -10,7 +10,6 @@
 #include <DataFrame/DateTime.h>
 
 #include <array>
-#include <bitset>
 #include <limits>
 #include <functional>
 #include <map>
@@ -304,6 +303,23 @@ public:  // Load/append/remove interfaces
                        long increment = 1,
                        DT_TIME_ZONE tz = DT_TIME_ZONE::LOCAL);
 
+    // This static method generates a vector of sequential values of
+    // IndexType that could be fed directly to one of the load methods.
+    // The values are incremented by "increment".
+    // The index type must be incrementable.
+    // If by incrementing "start_value" by increment you would never reach
+    // "end_value", the behavior will be undefined.
+    // It returns a vector of IndexType values.
+    //
+    // start_value, end_value: Starting and ending values of IndexType.
+    //                         Start value is included. End value is excluded.
+    // increment: Increment by value
+    //
+    static std::vector<IndexType>
+    gen_sequence_index(const IndexType &start_value,
+                       const IndexType &end_value,
+                       long increment = 1);
+
     // It copies the data from iterators begin to end to the named column.
     // If column does not exist, it will be created. If the column exist,
     // it will be over written.
@@ -450,10 +466,9 @@ public:  // Other public interfaces
     void
     drop_missing(drop_policy policy, size_type threshold = 0);
 
-    // It iterates over the column named col_name
-    // (or index, if col_name == "INDEX") and replaces all values in old_values
-    // with the corresponding values in new_values up to the limit. If limit is
-    // omitted, all values will be replaced.
+    // It iterates over the column named col_name and replaces all values
+    // in old_values with the corresponding values in new_values up to the
+    // limit. If limit is omitted, all values will be replaced.
     // It returns number of items replaced.
     //
     // T: Type on column col_name. If this is index it would be the same as
@@ -510,6 +525,20 @@ public:  // Other public interfaces
     template<typename T, typename F>
     std::future<void>
     replace_async(const char *col_name, F &functor);
+
+    // This does the same thing as replace() above for the index column
+    //
+    // N: Size of old_values and new_values arrays
+    // old_array: An array of values to be replaced in col_name column
+    // new_array: An array of values to to replace the old_values in col_name
+    //            column
+    // limit: Limit of how many items to replace. Default is to replace all.
+    //
+    template<size_t N>
+    size_type
+    replace_index(const std::array<IndexType, N> old_values,
+                  const std::array<IndexType, N> new_values,
+                  int limit = -1);
 
     // Make all data columns the same length as the index.
     // If any data column is shorter than the index column, it will be padded
@@ -958,12 +987,12 @@ public: // Read/access interfaces
     // T1: Type of the first named column
     // T2: Type of the second named column
     // T3: Type of the third named column
-    // T4: Type of the forth named column
+    // T4: Type of the fourth named column
     // V: Type of the visitor functor
     // name1: Name of the first data column
     // name2: Name of the second data column
     // name3: Name of the third data column
-    // name4: Name of the forth data column
+    // name4: Name of the fourth data column
     //
     template<typename T1, typename T2, typename T3, typename T4, typename V>
     V &
@@ -980,13 +1009,13 @@ public: // Read/access interfaces
     // T1: Type of the first named column
     // T2: Type of the second named column
     // T3: Type of the third named column
-    // T4: Type of the forth named column
+    // T4: Type of the fourth named column
     // T5: Type of the fifth named column
     // V: Type of the visitor functor
     // name1: Name of the first data column
     // name2: Name of the second data column
     // name3: Name of the third data column
-    // name4: Name of the forth data column
+    // name4: Name of the fourth data column
     // name5: Name of the fifth data column
     //
     template<typename T1, typename T2, typename T3, typename T4, typename T5,

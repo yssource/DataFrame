@@ -73,6 +73,7 @@ set(LIBRARY_TARGET_NAME ${PROJECT_NAME})
 set(${LIBRARY_TARGET_NAME}_SRC
   src/HeteroVector.cc
   src/HeteroView.cc
+  src/HeteroPtrView.cc
   src/ThreadGranularity.cc
   src/DateTime.cc
   src/MMapBase.cc
@@ -83,10 +84,13 @@ set(${LIBRARY_TARGET_NAME}_SRC
 # List of header files.
 set(${LIBRARY_TARGET_NAME}_HDR
   include/DataFrame/VectorView.h
+  include/DataFrame/VectorPtrView.h
   include/DataFrame/HeteroVector.h
   include/DataFrame/HeteroView.h
+  include/DataFrame/HeteroPtrView.h
   include/DataFrame/HeteroVector.tcc
   include/DataFrame/HeteroView.tcc
+  include/DataFrame/HeteroPtrView.tcc
   include/DataFrame/DataFrameVisitors.h
   include/DataFrame/DataFrameOperators.h
   include/DataFrame/DataFrame.h
@@ -206,6 +210,7 @@ include(AddUninstallTarget)
 # Build the test binary
 add_executable(dataframe_tester  test/dataframe_tester.cc)
 add_executable(vectors_tester    test/vectors_tester.cc)
+add_executable(vector_ptr_view_tester test/vector_ptr_view_tester.cc)
 add_executable(date_time_tester  test/date_time_tester.cc)
 add_executable(mmfile_tester     test/mmfile_tester.cc)
 add_executable(obj_vector_tester test/obj_vector_tester.cc)
@@ -217,6 +222,9 @@ target_link_libraries(dataframe_tester DataFrame)
 
 # Link the DataFrame library to the test binary
 target_link_libraries(vectors_tester DataFrame)
+
+# Link the DataFrame library to the test binary
+target_link_libraries(vector_ptr_view_tester DataFrame)
 
 # Link the DataFrame library to the test binary
 target_link_libraries(date_time_tester DataFrame)
@@ -239,6 +247,7 @@ if (UNIX)
   find_package(Threads REQUIRED)
   target_link_libraries(dataframe_tester Threads::Threads)
   target_link_libraries(vectors_tester Threads::Threads)
+  target_link_libraries(vector_ptr_view_tester Threads::Threads)
   target_link_libraries(date_time_tester Threads::Threads)
   target_link_libraries(mmfile_tester Threads::Threads)
   target_link_libraries(obj_vector_tester Threads::Threads)
@@ -249,6 +258,7 @@ endif (UNIX)
 if (UNIX AND NOT APPLE)
   target_link_libraries(dataframe_tester rt)
   target_link_libraries(vectors_tester rt)
+  target_link_libraries(vector_ptr_view_tester rt)
   target_link_libraries(date_time_tester rt)
   target_link_libraries(mmfile_tester rt)
   target_link_libraries(obj_vector_tester rt)
@@ -264,6 +274,9 @@ add_test(NAME dataframe_tester
 add_test(NAME vectors_tester
          COMMAND vectors_tester
          WORKING_DIRECTORY $<TARGET_FILE_DIR:vectors_tester>)
+add_test(NAME vector_ptr_view_tester
+         COMMAND vector_ptr_view_tester
+         WORKING_DIRECTORY $<TARGET_FILE_DIR:vector_ptr_view_tester>)
 add_test(NAME date_time_tester
          COMMAND date_time_tester
          WORKING_DIRECTORY $<TARGET_FILE_DIR:date_time_tester>)

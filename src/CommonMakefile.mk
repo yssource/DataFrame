@@ -13,7 +13,9 @@ PROJECT_INCLUDE_DIR = ../../include
 SRCS = HeteroVector.cc \
        ../test/dataframe_tester.cc \
        HeteroView.cc \
+       HeteroPtrView.cc \
        ../test/vectors_tester.cc \
+       ../test/vector_ptr_view_tester.cc \
        ../test/date_time_tester.cc \
        ../test/mmfile_tester.cc \
        ../test/sharedmem_tester.cc \
@@ -27,6 +29,8 @@ HEADERS = $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroVector.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroVector.tcc \
           $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroView.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroView.tcc \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroPtrView.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroPtrView.tcc \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrame.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrame.tcc \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrame_misc.tcc \
@@ -40,6 +44,7 @@ HEADERS = $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroVector.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrameVisitors.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrameOperators.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/VectorView.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/VectorPtrView.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/ThreadGranularity.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DateTime.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/FixedSizeString.h \
@@ -56,6 +61,7 @@ TARGET_LIB = $(LOCAL_LIB_DIR)/lib$(LIB_NAME).a
 TARGETS += $(TARGET_LIB) \
            $(LOCAL_BIN_DIR)/dataframe_tester \
 	       $(LOCAL_BIN_DIR)/vectors_tester \
+	       $(LOCAL_BIN_DIR)/vector_ptr_view_tester \
            $(LOCAL_BIN_DIR)/date_time_tester \
            $(LOCAL_BIN_DIR)/mmfile_tester \
            $(LOCAL_BIN_DIR)/obj_vector_tester \
@@ -77,6 +83,7 @@ DEFINES = -D_REENTRANT \
 #
 LIB_OBJS = $(LOCAL_OBJ_DIR)/HeteroVector.o \
            $(LOCAL_OBJ_DIR)/HeteroView.o \
+           $(LOCAL_OBJ_DIR)/HeteroPtrView.o \
            $(LOCAL_OBJ_DIR)/ThreadGranularity.o \
            $(LOCAL_OBJ_DIR)/DateTime.o \
            $(LOCAL_OBJ_DIR)/MMapBase.o \
@@ -121,6 +128,10 @@ VECTORS_TESTER_OBJ = $(LOCAL_OBJ_DIR)/vectors_tester.o
 $(LOCAL_BIN_DIR)/vectors_tester: $(TARGET_LIB) $(VECTORS_TESTER_OBJ)
 	$(CXX) -o $@ $(VECTORS_TESTER_OBJ) $(LIBS)
 
+VECTOR_PTR_VIEW_TESTER_OBJ = $(LOCAL_OBJ_DIR)/vector_ptr_view_tester.o
+$(LOCAL_BIN_DIR)/vector_ptr_view_tester: $(TARGET_LIB) $(VECTOR_PTR_VIEW_TESTER_OBJ)
+	$(CXX) -o $@ $(VECTOR_PTR_VIEW_TESTER_OBJ) $(LIBS)
+
 DATE_TIME_TESTER_OBJ = $(LOCAL_OBJ_DIR)/date_time_tester.o
 $(LOCAL_BIN_DIR)/date_time_tester: $(TARGET_LIB) $(DATE_TIME_TESTER_OBJ)
 	$(CXX) -o $@ $(DATE_TIME_TESTER_OBJ) $(LIBS)
@@ -148,13 +159,13 @@ depend:
 
 clean:
 	rm -f $(LIB_OBJS) $(TARGETS) $(DATAFRAME_TESTER_OBJ) $(VECTORS_TESTER_OBJ) \
-          $(DATE_TIME_TESTER_OBJ) \
+          $(DATE_TIME_TESTER_OBJ) $(VECTOR_PTR_VIEW_TESTER_OBJ) \
           $(MMFILE_TESTER_OBJ) $(SHAREDMEM_TESTER_OBJ) \
           $(OBJ_VECTOR_TESTER_OBJ) $(OBJ_VECTOR_ERASE_TESTER_OBJ)
 
 clobber:
 	rm -f $(LIB_OBJS) $(TARGETS) $(DATAFRAME_TESTER_OBJ) $(VECTORS_TESTER_OBJ) \
-          $(DATE_TIME_TESTER_OBJ) \
+          $(DATE_TIME_TESTER_OBJ) $(VECTOR_PTR_VIEW_TESTER_OBJ) \
           $(MMFILE_TESTER_OBJ) $(SHAREDMEM_TESTER_OBJ) \
           $(OBJ_VECTOR_TESTER_OBJ) $(OBJ_VECTOR_ERASE_TESTER_OBJ)
 

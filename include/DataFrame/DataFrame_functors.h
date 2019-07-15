@@ -407,6 +407,31 @@ struct sel_load_view_functor_ : DataVec::template visitor_base<Ts ...>  {
 
 // ----------------------------------------------------------------------------
 
+template<typename ... Ts>
+struct sel_remove_functor_ : DataVec::template visitor_base<Ts ...>  {
+
+    inline sel_remove_functor_ (const std::vector<size_type> &si)
+        : sel_indices (si)  {   }
+
+    const std::vector<size_type>    &sel_indices;
+
+    template<typename T>
+    void operator() (std::vector<T> &vec) const;
+};
+
+// ----------------------------------------------------------------------------
+
+template<typename ... Ts>
+struct shuffle_functor_ : DataVec::template visitor_base<Ts ...>  {
+
+    inline shuffle_functor_ ()  {  }
+
+    template<typename T>
+    void operator() (std::vector<T> &vec) const;
+};
+
+// ----------------------------------------------------------------------------
+
 // Local Variables:
 // mode:C++
 // tab-width:4

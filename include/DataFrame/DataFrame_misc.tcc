@@ -3,10 +3,11 @@
 // Copyright (C) 2018-2019 Hossein Moein
 // Distributed under the BSD Software License (see file License)
 
-#include <DataFrame/DateTime.h>
 #include <DataFrame/DataFrame.h>
 
+#include <algorithm>
 #include <cstdio>
+#include <random>
 
 // ----------------------------------------------------------------------------
 
@@ -553,6 +554,45 @@ operator() (std::vector<T> &vec)  {
 
     dfv.data_.emplace_back(data_vec_t(std::move(new_col)));
     dfv.column_tb_.emplace (name, dfv.data_.size() - 1);
+    return;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename I, typename H>
+template<typename ... Ts>
+template<typename T>
+void
+DataFrame<I, H>::
+sel_remove_functor_<Ts ...>::
+operator() (std::vector<T> &vec) const  {
+
+    const size_type sel_indices_s = sel_indices.size();
+    const size_type vec_s = vec.size();
+    size_type       del_count = 0;
+
+    for (size_type i = 0; i < sel_indices_s; ++i)
+        if (sel_indices[i] < vec_s)
+            vec.erase(vec.begin() + sel_indices[i] - del_count++);
+        else
+            break;
+    return;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename I, typename H>
+template<typename ... Ts>
+template<typename T>
+void
+DataFrame<I, H>::
+shuffle_functor_<Ts ...>::
+operator() (std::vector<T> &vec) const  {
+
+    std::random_device  rd;
+    std::mt19937        g(rd());
+
+    std::shuffle(vec.begin(), vec.end(), g);
     return;
 }
 

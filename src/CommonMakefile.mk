@@ -25,12 +25,12 @@ SRCS = HeteroVector.cc \
        MMapFile.cc \
        MMapSharedMem.cc
 
-HEADERS = $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroVector.h \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroVector.tcc \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroView.h \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroView.tcc \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroPtrView.h \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroPtrView.tcc \
+HEADERS = $(LOCAL_INCLUDE_DIR)/DataFrame/Vectors/HeteroVector.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Vectors/HeteroVector.tcc \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Vectors/HeteroView.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Vectors/HeteroView.tcc \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Vectors/HeteroPtrView.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Vectors/HeteroPtrView.tcc \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrame.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrame.tcc \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrame_misc.tcc \
@@ -43,11 +43,11 @@ HEADERS = $(LOCAL_INCLUDE_DIR)/DataFrame/HeteroVector.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrame_functors.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrameVisitors.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/DataFrameOperators.h \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/VectorView.h \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/VectorPtrView.h \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/ThreadGranularity.h \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/DateTime.h \
-          $(LOCAL_INCLUDE_DIR)/DataFrame/FixedSizeString.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Vectors/VectorView.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Vectors/VectorPtrView.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Utils/ThreadGranularity.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Utils/DateTime.h \
+          $(LOCAL_INCLUDE_DIR)/DataFrame/Utils/FixedSizeString.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/MMap/FileDef.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/MMap/MMapBase.h \
           $(LOCAL_INCLUDE_DIR)/DataFrame/MMap/MMapFile.h \

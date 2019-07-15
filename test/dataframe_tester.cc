@@ -2133,7 +2133,7 @@ int main(int argc, char *argv[]) {
     {
         // Testing gen_datetime_index()
         // I am commenting some of these out because with timezone spec,
-        // it will take tool long for the test to run
+        // it will take too long for the test to run
 
         std::vector<unsigned long>  idx_vec1 =
             MyDataFrame::gen_datetime_index("01/01/2018",
@@ -2149,7 +2149,7 @@ int main(int argc, char *argv[]) {
         assert(idx_vec1[10] == 20280101);
         assert(idx_vec1[20] == 20380101);
 
-		/*
+        /*
         idx_vec1 = MyDataFrame::gen_datetime_index("01/01/2018",
                                                    "12/31/2038",
                                                    time_frequency::monthly,
@@ -2201,7 +2201,7 @@ int main(int argc, char *argv[]) {
         assert(idx_vec1[2] == 1514790000);
         assert(idx_vec1[43798] == 1672455600);
         assert(idx_vec1[43799] == 1672459200);
-		*/
+        */
 
         idx_vec1 = MyDataFrame::gen_datetime_index("01/01/2018",
                                                    "03/31/2018",
@@ -2699,6 +2699,125 @@ int main(int argc, char *argv[]) {
         assert(result3.get_column<double>("col_1")[0] == 1);
         assert(result3.get_column<double>("col_1")[1] == 3);
         assert(result3.get_column<double>("col_1")[2] == 5);
+    }
+
+    {
+        // Testing remove_data_by_sel() and shape()
+
+        std::vector<unsigned long>  idx =
+            { 123450, 123451, 123452, 123453, 123454, 123455, 123456 };
+        std::vector<double> d1 = { 1, 2, 3, 4, 5, 6, 7 };
+        std::vector<double> d2 = { 8, 9, 10, 11, 12, 13, 14 };
+        std::vector<double> d3 = { 15, 16, 17, 18, 19, 20, 21 };
+        std::vector<double> d4 = { 22, 23, 24, 25 };
+        std::vector<std::string> s1 =
+            { "11", "22", "33", "ee", "ff", "gg", "ll" };
+        MyDataFrame         df;
+
+        auto    shape = df.shape();
+
+        assert(shape.first == 0);
+        assert(shape.second == 0);
+
+        df.load_data(std::move(idx),
+                     std::make_pair("col_1", d1),
+                     std::make_pair("col_2", d2),
+                     std::make_pair("col_3", d3),
+                     std::make_pair("col_str", s1));
+        df.load_column("col_4",
+                       std::move(d4),
+                       nan_policy::dont_pad_with_nans);
+
+        shape = df.shape();
+        assert(shape.first == 7);
+        assert(shape.second == 5);
+
+        MyDataFrame df2 = df;
+
+        auto    functor =
+            [](const unsigned long &, const double &val)-> bool {
+                return (val >= 5);
+            };
+
+        df.remove_data_by_sel<double, decltype(functor), double, std::string>
+            ("col_1", functor);
+
+        assert(df.get_index().size() == 4);
+        assert(df.get_column<double>("col_1").size() == 4);
+        assert(df.get_column<std::string>("col_str").size() == 4);
+        assert(df.get_column<double>("col_4").size() == 4);
+        assert(df.get_index()[0] == 123450);
+        assert(df.get_index()[2] == 123452);
+        assert(df.get_column<double>("col_2")[1] == 9);
+        assert(df.get_column<std::string>("col_str")[1] == "22");
+        assert(df.get_column<std::string>("col_str")[2] == "33");
+        assert(df.get_column<double>("col_1")[1] == 2);
+        assert(df.get_column<double>("col_1")[2] == 3);
+        assert(df.get_column<double>("col_4")[3] == 25);
+
+        auto    functor2 =
+            [](const unsigned long &,
+               const double &val1,
+               const double &val2,
+               const std::string val3)-> bool {
+                return (val1 >= 5 || val2 == 15 || val3 == "33");
+            };
+
+        df2.remove_data_by_sel<double,
+                               double,
+                               std::string,
+                               decltype(functor2),
+                               double, std::string>
+            ("col_1", "col_3", "col_str", functor2);
+
+        assert(df2.get_index().size() == 2);
+        assert(df2.get_column<double>("col_1").size() == 2);
+        assert(df2.get_column<std::string>("col_str").size() == 2);
+        assert(df2.get_column<double>("col_4").size() == 2);
+        assert(df2.get_index()[0] == 123451);
+        assert(df2.get_index()[1] == 123453);
+        assert(df2.get_column<double>("col_2")[0] == 9);
+        assert(df2.get_column<double>("col_2")[1] == 11);
+        assert(df2.get_column<double>("col_4")[0] == 23);
+        assert(df2.get_column<double>("col_4")[1] == 25);
+        assert(df2.get_column<std::string>("col_str")[0] == "22");
+        assert(df2.get_column<std::string>("col_str")[1] == "ee");
+        assert(df2.get_column<double>("col_1")[0] == 2);
+        assert(df2.get_column<double>("col_1")[1] == 4);
+    }
+
+    {
+        // Testing shuffle()
+
+        std::vector<unsigned long>  idx =
+            { 123450, 123451, 123452, 123453, 123454, 123455, 123456 };
+        std::vector<double> d1 = { 1, 2, 3, 4, 5, 6, 7 };
+        std::vector<double> d2 = { 8, 9, 10, 11, 12, 13, 14 };
+        std::vector<double> d3 = { 15, 16, 17, 18, 19, 20, 21 };
+        std::vector<double> d4 = { 22, 23, 24, 25 };
+        std::vector<std::string> s1 =
+            { "11", "22", "33", "aa", "bb", "cc", "dd" };
+        MyDataFrame         df;
+
+        df.load_data(std::move(idx),
+                     std::make_pair("col_1", d1),
+                     std::make_pair("col_2", d2),
+                     std::make_pair("col_3", d3),
+                     std::make_pair("col_str", s1));
+        df.load_column("col_4",
+                       std::move(d4),
+                       nan_policy::dont_pad_with_nans);
+
+        std::cout << "Original DatFrasme:" << std::endl;
+        df.write<std::ostream, int, double, std::string>(std::cout);
+
+		df.shuffle<2, double, std::string>({"col_1", "col_str"}, false);
+        std::cout << "shuffle with no index:" << std::endl;
+        df.write<std::ostream, int, double, std::string>(std::cout);
+
+		df.shuffle<2, double>({"col_2", "col_3"}, true);
+        std::cout << "shuffle with index:" << std::endl;
+        df.write<std::ostream, int, double, std::string>(std::cout);
     }
 
     return (0);

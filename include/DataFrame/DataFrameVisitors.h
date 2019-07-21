@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <DataFrame/DataFrame.h>
+#include <DataFrame/DataFrameTypes.h>
 
 #include <cstddef>
 #include <algorithm>
@@ -15,14 +15,6 @@
 
 namespace hmdf
 {
-
-enum class return_policy : unsigned char  {
-    log = 1,
-    percentage = 2,
-    monetary = 3,
-};
-
-// ----------------------------------------------------------------------------
 
 template<typename T,
          typename I = unsigned long,
@@ -620,7 +612,7 @@ public:
     using index_type = I;
     using result_type = std::vector<f_result_type>;
 
-    explicit SimpleRollAdopter(F &&functor, size_t r_count)
+    inline SimpleRollAdopter(F &&functor, size_t r_count)
         : functor_(std::move(functor)), roll_count_(r_count)  {   }
 
     inline void

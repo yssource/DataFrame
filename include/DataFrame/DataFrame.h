@@ -13,7 +13,6 @@
 #include <cstring>
 #include <functional>
 #include <future>
-#include <limits>
 #include <map>
 #include <vector>
 #include <utility>
@@ -35,7 +34,7 @@ template<typename I, typename H>
 class DataFrame : public ThreadGranularity  {
 
     static_assert(std::is_base_of<HeteroVector, H>::value ||
-                      std::is_base_of<HeteroView, H>::value ||
+                  std::is_base_of<HeteroView, H>::value ||
                   std::is_base_of<HeteroPtrView, H>::value,
                   "H argument can only be either of "
                   "HeteroVector, HeteroView, HeteroPtrView "
@@ -966,6 +965,50 @@ public: // Read/access interfaces
                      const char *name2,
                      const char *name3,
                      F &sel_functor);
+
+    // It returns a DataFrame (including the index and data columns)
+    // containing the data from uniform random selection.
+    // random_policy determines the behavior of method.
+    // Note: The actual number of rows returned might be smaller than
+    //       requested. That is because the random process might produce
+    //       the same number more than once.
+    // Note: The columns in the result are not padded with NaN.
+    //
+    // Ts: List all the types of all data columns.
+    //     A type should be specified in the list only once.
+    // random_policy: Please see random_policy in DataFrameTypes.h. It
+    //                specifies how this function should proceed.
+    // n: Depending on the random policy, it is either the number of rows to
+    //    sample or a fraction of rows to sample. In case of fraction, for
+    //    example 0.4 means 40% of rows.
+    // seed: depending on the random policy, user could specify a seed. The
+    //       same seed should always produce the same random selection.
+    //
+    template<typename ... Ts>
+    DataFrame
+    get_data_by_rand (random_policy spec, double n, size_type seed = 0) const;
+
+    // It behaves like get_data_by_rand(), but it returns a DataFrameView.
+    // A view is a DataFrame that is a reference to the original DataFrame.
+    // So if you modify anything in the view the original DataFrame will
+    // also be modified.
+    // Note: There are certain operations that you cannot do with a view.
+    //       For example, you cannot add/delete columns, etc.
+    // Note: The columns in the result are not padded with NaN.
+    //
+    // Ts: List all the types of all data columns.
+    //     A type should be specified in the list only once.
+    // random_policy: Please see random_policy in DataFrameTypes.h. It
+    //                specifies how this function should proceed.
+    // n: Depending on the random policy, it is either the number of rows to
+    //    sample or a fraction of rows to sample. In case of fraction, for
+    //    example 0.4 means 40% of rows.
+    // seed: depending on the random policy, user could specify a seed. The
+    //       same seed should always produce the same random selection.
+    //
+    template<typename ... Ts>
+    DataFramePtrView<IndexType>
+    get_view_by_rand (random_policy spec, double n, size_type seed = 0) const;
 
     // It returns a const reference to the index container
     //

@@ -432,6 +432,44 @@ struct shuffle_functor_ : DataVec::template visitor_base<Ts ...>  {
 
 // ----------------------------------------------------------------------------
 
+template<typename ... Ts>
+struct random_load_data_functor_ : DataVec::template visitor_base<Ts ...>  {
+
+    inline random_load_data_functor_ (
+        const char *n,
+        const std::vector<std::size_t>  &ri,
+        DataFrame &d)
+        : name (n), rand_indices (ri), df(d)  {   }
+
+    const char                      *name;
+    const std::vector<std::size_t>  &rand_indices;
+    DataFrame                       &df;
+
+    template<typename T>
+    void operator() (const T &vec);
+};
+
+// ----------------------------------------------------------------------------
+
+template<typename ... Ts>
+struct random_load_view_functor_ : DataVec::template visitor_base<Ts ...>  {
+
+    inline random_load_view_functor_ (
+        const char *n,
+        const std::vector<std::size_t>  &ri,
+        DataFramePtrView<IndexType> &d)
+        : name (n), rand_indices (ri), dfv(d)  {   }
+
+    const char                      *name;
+    const std::vector<std::size_t>  &rand_indices;
+    DataFramePtrView<IndexType>     &dfv;
+
+    template<typename T>
+    void operator() (const T &vec);
+};
+
+// ----------------------------------------------------------------------------
+
 // Local Variables:
 // mode:C++
 // tab-width:4

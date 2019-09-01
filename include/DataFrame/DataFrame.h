@@ -10,13 +10,9 @@
 #include <DataFrame/Utils/ThreadGranularity.h>
 
 #include <array>
-#include <cstring>
-#include <functional>
+#include <fstream>
 #include <future>
 #include <map>
-#include <vector>
-#include <utility>
-#include <type_traits>
 
 // ----------------------------------------------------------------------------
 
@@ -34,8 +30,8 @@ template<typename I, typename H>
 class DataFrame : public ThreadGranularity  {
 
     static_assert(std::is_base_of<HeteroVector, H>::value ||
-                  std::is_base_of<HeteroView, H>::value ||
-                  std::is_base_of<HeteroPtrView, H>::value,
+                      std::is_base_of<HeteroView, H>::value ||
+                      std::is_base_of<HeteroPtrView, H>::value,
                   "H argument can only be either of "
                   "HeteroVector, HeteroView, HeteroPtrView "
                   "or their derived types");
@@ -79,18 +75,20 @@ public:  // Load/append/remove interfaces
     //
     template<typename T>
     std::vector<T> &
-    create_column (const char *name);
+    create_column(const char *name);
 
     // It removes a column named name.
     // The actual data vector is not deleted, but the column is dropped from
     // DataFrame
     //
-    void remove_column (const char *name);
+    void
+    remove_column(const char *name);
 
     // It renames column named from to to. If column from does not exists,
     // it throws an exception
     //
-    void rename_column (const char *from, const char *to);
+    void
+    rename_column(const char *from, const char *to);
 
     // This is the most generalized load function. It creates and loads an
     // index and a variable number of columns. The index vector and all
@@ -104,7 +102,7 @@ public:  // Load/append/remove interfaces
     //
     template<typename ... Ts>
     size_type
-    load_data (IndexVecType &&indices, Ts&& ... args);
+    load_data(IndexVecType &&indices, Ts&& ... args);
 
     // It copies the data from iterators begin to end into the index column
     //
@@ -116,56 +114,8 @@ public:  // Load/append/remove interfaces
 
     // It moves the idx vector into the index column.
     //
-    size_type load_index(IndexVecType &&idx);
-
-    // This static method generates a date/time-based index vector that could
-    // be fed directly to one of the load methods. Depending on the specified
-    // frequency, it generates specific timestamps (see below).
-    // It returns a vector of IndexType timestamps.
-    // Currently IndexType could be any built-in numeric type or DateTime
-    //
-    // start_datetime, end_datetime: They are the start/end date/times of
-    //     requested timestamps.
-    //     They must be in the following format:
-    //     MM/DD/YYYY [HH[:MM[:SS[.MMM]]]]
-    // t_freq: Specifies the timestamp frequency. Depending on the frequency,
-    //         and IndexType type specific timestamps are generated as follows:
-    //     - IndexType type of DateTime always generates timestamps of DateTime.
-    //     - Annual, monthly, weekly, and daily frequencies generates YYYYMMDD
-    //       timestamps.
-    //     - Hourly, minutely, and secondly frequencies generates epoch
-    //       timestamps (64 bit).
-    //     - Millisecondly frequency generates nano-second since epoch
-    //       timestamps (128 bit).
-    // increment: Increment in the units of the frequency
-    // tz: Time-zone of generated timestamps
-    //
-    // NOTE: It is the responsibility of the programmer to make sure
-    //       IndexType type is big enough to contain the frequency.
-    //
-    static std::vector<IndexType>
-    gen_datetime_index(const char *start_datetime,
-                       const char *end_datetime,
-                       time_frequency t_freq,
-                       long increment = 1,
-                       DT_TIME_ZONE tz = DT_TIME_ZONE::LOCAL);
-
-    // This static method generates a vector of sequential values of
-    // IndexType that could be fed directly to one of the load methods.
-    // The values are incremented by "increment".
-    // The index type must be incrementable.
-    // If by incrementing "start_value" by increment you would never reach
-    // "end_value", the behavior will be undefined.
-    // It returns a vector of IndexType values.
-    //
-    // start_value, end_value: Starting and ending values of IndexType.
-    //                         Start value is included. End value is excluded.
-    // increment: Increment by value
-    //
-    static std::vector<IndexType>
-    gen_sequence_index(const IndexType &start_value,
-                       const IndexType &end_value,
-                       long increment = 1);
+    size_type
+    load_index(IndexVecType &&idx);
 
     // It copies the data from iterators begin to end to the named column.
     // If column does not exist, it will be created. If the column exist,
@@ -207,7 +157,8 @@ public:  // Load/append/remove interfaces
 
     // It appends val to the end of the index column.
     //
-    size_type append_index(const IndexType &val);
+    size_type
+    append_index(const IndexType &val);
 
     // It appends val to the end of the named data column.
     // If data column doesn't exist, it throws an exception.
@@ -259,12 +210,12 @@ public:  // Load/append/remove interfaces
     //
     template<typename ... Ts>
     void
-    remove_data_by_idx (Index2D<IndexType> range);
+    remove_data_by_idx(Index2D<IndexType> range);
 
     // It removes the data rows from location begin to location end
     // within range.
     // This function supports Python-like negative indexing. That is why the
-    // range type is int.
+    // range type is long.
     // This function first calls make_consistent() that may add nan values to
     // data columns.
     //
@@ -274,7 +225,7 @@ public:  // Load/append/remove interfaces
     //
     template<typename ... Ts>
     void
-    remove_data_by_loc (Index2D<int> range);
+    remove_data_by_loc(Index2D<long> range);
 
     // It removes data rows by boolean filtering selection via the sel_functor
     // (e.g. a functor, function, or lambda).
@@ -298,7 +249,7 @@ public:  // Load/append/remove interfaces
     //
     template<typename T, typename F, typename ... Ts>
     void
-    remove_data_by_sel (const char *name, F &sel_functor);
+    remove_data_by_sel(const char *name, F &sel_functor);
 
     // This does the same function as above remove_data_by_sel() but operating
     // on two columns.
@@ -316,7 +267,7 @@ public:  // Load/append/remove interfaces
     //
     template<typename T1, typename T2, typename F, typename ... Ts>
     void
-    remove_data_by_sel (const char *name1, const char *name2, F &sel_functor);
+    remove_data_by_sel(const char *name1, const char *name2, F &sel_functor);
 
     // This does the same function as above remove_data_by_sel() but operating
     // on three columns.
@@ -337,12 +288,12 @@ public:  // Load/append/remove interfaces
     template<typename T1, typename T2, typename T3, typename F,
              typename ... Ts>
     void
-    remove_data_by_sel (const char *name1,
-                        const char *name2,
-                        const char *name3,
-                        F &sel_functor);
+    remove_data_by_sel(const char *name1,
+                       const char *name2,
+                       const char *name3,
+                       F &sel_functor);
 
-public:  // Other public interfaces
+public:  // Data manipulation
 
     // It randomly shuffles the named column(s) non-deterministically.
     //
@@ -466,18 +417,6 @@ public:  // Other public interfaces
                   const std::array<IndexType, N> new_values,
                   int limit = -1);
 
-    // Make all data columns the same length as the index.
-    // If any data column is shorter than the index column, it will be padded
-    // by nan.
-    // This is also called by sort(), before sorting
-    //
-    // Ts: List all the types of all data columns.
-    //     A type should be specified in the list only once.
-    //
-    template<typename ... Ts>
-    void
-    make_consistent ();
-
     // Sort the DataFrame by the named column. By default, it sorts
     // by index (i.e. by_name == nullptr).
     // Sort first calls make_consistent() that may add nan values to
@@ -497,7 +436,7 @@ public:  // Other public interfaces
     //
     template<typename T, typename ... Ts>
     std::future<void>
-    sort_async (const char *by_name = nullptr);
+    sort_async(const char *by_name = nullptr);
 
     // Groupby copies the DataFrame into a temp DataFrame and sorts
     // the temp df by gb_col_name before performing groupby.
@@ -522,9 +461,9 @@ public:  // Other public interfaces
     //
     template<typename F, typename T, typename ... Ts>
     std::future<DataFrame>
-    groupby_async (F &&func,
-                   const char *gb_col_name = nullptr,
-                   sort_state already_sorted = sort_state::not_sorted) const;
+    groupby_async(F &&func,
+                  const char *gb_col_name = nullptr,
+                  sort_state already_sorted = sort_state::not_sorted) const;
 
     // It counts the unique values in the named column.
     // It returns a StdDataFrame of following specs:
@@ -544,7 +483,7 @@ public:  // Other public interfaces
     //
     template<typename T>
     StdDataFrame<T>
-    value_counts (const char *col_name) const;
+    value_counts(const char *col_name) const;
 
     // It bucketizes the data and index into bucket_interval's,
     // based on index values and calls the functor for each bucket.
@@ -569,13 +508,13 @@ public:  // Other public interfaces
     //
     template<typename F, typename ... Ts>
     DataFrame
-    bucketize (F &&func, const IndexType &bucket_interval) const;
+    bucketize(F &&func, const IndexType &bucket_interval) const;
 
     // Same as bucketize() above, but executed asynchronously
     //
     template<typename F, typename ... Ts>
     std::future<DataFrame>
-    bucketize_async (F &&func, const IndexType &bucket_interval) const;
+    bucketize_async(F &&func, const IndexType &bucket_interval) const;
 
     // This is exactly the same as bucketize() above. The only difference is
     // it stores the result in itself and returns void.
@@ -586,7 +525,7 @@ public:  // Other public interfaces
     //
     template<typename F, typename ... Ts>
     void
-    self_bucketize (F &&func, const IndexType &bucket_interval);
+    self_bucketize(F &&func, const IndexType &bucket_interval);
 
     // It transposes the data in the DataFrame.
     // The transpose() is only defined for DataFrame's that have a single
@@ -632,7 +571,7 @@ public:  // Other public interfaces
     //
     template<typename RHS_T, typename ... Ts>
     StdDataFrame<IndexType>
-    join_by_index (const RHS_T &rhs, join_policy jp) const;
+    join_by_index(const RHS_T &rhs, join_policy jp) const;
 
     // It shifts all the columns in self up or down based on shift_policy.
     // Values that are shifted will be assigned to NaN. The index column
@@ -647,14 +586,14 @@ public:  // Other public interfaces
     //
     template<typename ... Ts>
     void
-    self_shift (size_type periods, shift_policy sp);
+    self_shift(size_type periods, shift_policy sp);
 
     // It is exactly the same as self_shift, but it leaves self unchanged
     // and returns a new DataFrame with columns shifted.
     //
     template<typename ... Ts>
     StdDataFrame<IndexType>
-    shift (size_type periods, shift_policy sp) const;
+    shift(size_type periods, shift_policy sp) const;
 
     // It rotates all the columns in self up or down based on shift_policy.
     // The index column remains unchanged.
@@ -668,67 +607,16 @@ public:  // Other public interfaces
     //
     template<typename ... Ts>
     void
-    self_rotate (size_type periods, shift_policy sp);
+    self_rotate(size_type periods, shift_policy sp);
 
     // It is exactly the same as self_rotate, but it leaves self unchanged
     // and returns a new DataFrame with columns rotated.
     //
     template<typename ... Ts>
     StdDataFrame<IndexType>
-    rotate (size_type periods, shift_policy sp) const;
+    rotate(size_type periods, shift_policy sp) const;
 
-    // It outputs the content of DataFrame into the stream o as text in the
-    // following format:
-    //     INDEX:<Comma delimited list of values>
-    //     <Column1 name>:<Column1 type>:<Comma delimited list of values>
-    //     <Column2 name>:<Column2 type>:<Comma delimited list of values>
-    //
-    // S: Output stream type
-    // Ts: List all the types of all data columns.
-    //     A type should be specified in the list only once.
-    // o: Reference to an streamable object (e.g. cout)
-    // values_only: If true, the name and type of each column is not written
-    // iof: Specifies the I/O format. The default is CSV
-    //
-    template<typename S, typename ... Ts>
-    bool
-    write (S &o,
-           bool values_only = false,
-           io_format iof = io_format::csv) const;
-
-    // Same as write() above, but executed asynchronously
-    //
-    template<typename S, typename ... Ts>
-    std::future<bool>
-    write_async (S &o,
-                 bool values_only = false,
-                 io_format iof = io_format::csv) const;
-
-    // It inputs the contents of a text file into itself (i.e. DataFrame).
-    // The format of the file must be:
-    //     INDEX:<Comma delimited list of values>
-    //     <Column1 name>:<Column1 type>:<Comma delimited list of values>
-    //     <Column2 name>:<Column2 type>:<Comma delimited list of values>
-    // All empty lines or lines starting with # will be skipped.
-    //
-    // file_name: Complete path to the file
-    // iof: Specifies the I/O format. The default is CSV
-    //
-    bool read (const char *file_name, io_format iof = io_format::csv);
-
-    // Same as read() above, but executed asynchronously
-    //
-    std::future<bool>
-    read_async (const char *file_name, io_format iof = io_format::csv);
-
-public: // Read/access interfaces
-
-    // It returns a pair containing number of rows and columns.
-    // Note: Number of rows is the number of index rows. Not every column
-    //       has the same number of rows, necessarily. But each column has,
-    //       at most, this number of rows.
-    //
-    std::pair<size_type, size_type> shape();
+public: // Read/access and slicing interfaces
 
     // It returns a reference to the container of named data column
     // The return type depends on if we are in standard or view mode
@@ -737,7 +625,7 @@ public: // Read/access interfaces
     //
     template<typename T>
     typename type_declare<DataVec, T>::type &
-    get_column (const char *name);
+    get_column(const char *name);
 
     // It returns a const reference to the container of named data column
     // The return type depends on if we are in standard or view mode
@@ -746,7 +634,7 @@ public: // Read/access interfaces
     //
     template<typename T>
     const typename type_declare<DataVec, T>::type &
-    get_column (const char *name) const;
+    get_column(const char *name) const;
 
     // It returns the data in row row_num for columns in col_names.
     // The order of data items in the returned vector is the same as order
@@ -794,9 +682,24 @@ public: // Read/access interfaces
     //
     template<typename ... Ts>
     DataFrame
-    get_data_by_idx (Index2D<IndexType> range) const;
+    get_data_by_idx(Index2D<IndexType> range) const;
 
-    // It behaves like get_data_by_idx(), but it returns a DataFrameView.
+    // It returns a DataFrame (including the index and data columns)
+    // containing the data corresponding to the indices specified in "values"
+    // vector.
+    // This method runs in O(n), where n is the number of indices, by
+    // creating a hash table of values. IndexType must be hashable.
+    // NOTE: The returned DataFrame is in the same order as original DataFrame
+    //
+    // Ts: List all the types of all data columns.
+    //     A type should be specified in the list only once.
+    // values: List of indices to copy data from
+    //
+    template<typename ... Ts>
+    DataFrame
+    get_data_by_idx(const std::vector<IndexType> &values) const;
+
+    // It behaves like get_data_by_idx(range), but it returns a DataFrameView.
     // A view is a DataFrame that is a reference to the original DataFrame.
     // So if you modify anything in the view the original DataFrame will
     // also be modified.
@@ -809,12 +712,28 @@ public: // Read/access interfaces
     //
     template<typename ... Ts>
     DataFrameView<IndexType>
-    get_view_by_idx (Index2D<IndexType> range);
+    get_view_by_idx(Index2D<IndexType> range);
+
+    // It behaves like get_data_by_idx(values), but it returns a
+    // DataFramePtrView.
+    // A view is a DataFrame that is a reference to the original DataFrame.
+    // So if you modify anything in the view the original DataFrame will
+    // also be modified.
+    // Note: There are certain operations that you cannot do with a view.
+    //       For example, you cannot add/delete columns, etc.
+    //
+    // Ts: List all the types of all data columns.
+    //     A type should be specified in the list only once.
+    // values: List of indices to copy data from
+    //
+    template<typename ... Ts>
+    DataFramePtrView<IndexType>
+    get_view_by_idx(const std::vector<IndexType> &values);
 
     // It returns a DataFrame (including the index and data columns)
     // containing the data from location begin to location end within range.
     // This function supports Python-like negative indexing. That is why the
-    // range type is int.
+    // range type is long.
     //
     // Ts: List all the types of all data columns.
     //     A type should be specified in the list only once.
@@ -822,9 +741,25 @@ public: // Read/access interfaces
     //
     template<typename ... Ts>
     DataFrame
-    get_data_by_loc (Index2D<int> range) const;
+    get_data_by_loc(Index2D<long> range) const;
 
-    // It behaves like get_data_by_loc(), but it returns a DataFrameView.
+    // It returns a DataFrame (including the index and data columns)
+    // containing the data from locations, specified in locations vector.
+    // This function supports Python-like negative indexing. That is why the
+    // locations vector type is long.
+    // NOTE: The negative indixing is relative to the "index" column, which
+    //       may not be the size as all other column.
+    //       The returned DataFrame is in the same order as locations parameter
+    //
+    // Ts: List all the types of all data columns.
+    //     A type should be specified in the list only once.
+    // locations: List of indices into the index column to copy data
+    //
+    template<typename ... Ts>
+    DataFrame
+    get_data_by_loc(const std::vector<long> &locations) const;
+
+    // It behaves like get_data_by_loc(range), but it returns a DataFrameView.
     // A view is a DataFrame that is a reference to the original DataFrame.
     // So if you modify anything in the view the original DataFrame will
     // also be modified.
@@ -837,7 +772,23 @@ public: // Read/access interfaces
     //
     template<typename ... Ts>
     DataFrameView<IndexType>
-    get_view_by_loc (Index2D<int> range);
+    get_view_by_loc(Index2D<long> range);
+
+    // It behaves like get_data_by_loc(locations), but it returns a
+    // DataFramePtrView.
+    // A view is a DataFrame that is a reference to the original DataFrame.
+    // So if you modify anything in the view the original DataFrame will
+    // also be modified.
+    // Note: There are certain operations that you cannot do with a view.
+    //       For example, you cannot add/delete columns, etc.
+    //
+    // Ts: List all the types of all data columns.
+    //     A type should be specified in the list only once.
+    // locations: List of indices into the index column to copy data
+    //
+    template<typename ... Ts>
+    DataFramePtrView<IndexType>
+    get_view_by_loc(const std::vector<long> &locations);
 
     // This method does boolean filtering selection via the sel_functor
     // (e.g. a functor, function, or lambda). It returns a new DataFrame.
@@ -862,7 +813,7 @@ public: // Read/access interfaces
     //
     template<typename T, typename F, typename ... Ts>
     DataFrame
-    get_data_by_sel (const char *name, F &sel_functor) const;
+    get_data_by_sel(const char *name, F &sel_functor) const;
 
     // This is identical with above get_data_by_sel(), but:
     // 1) The result is a view
@@ -878,7 +829,7 @@ public: // Read/access interfaces
     //
     template<typename T, typename F, typename ... Ts>
     DataFramePtrView<IndexType>
-    get_view_by_sel (const char *name, F &sel_functor);
+    get_view_by_sel(const char *name, F &sel_functor);
 
     // This does the same function as above get_data_by_sel() but operating
     // on two columns.
@@ -896,9 +847,9 @@ public: // Read/access interfaces
     //
     template<typename T1, typename T2, typename F, typename ... Ts>
     DataFrame
-    get_data_by_sel (const char *name1,
-                     const char *name2,
-                     F &sel_functor) const;
+    get_data_by_sel(const char *name1,
+                    const char *name2,
+                    F &sel_functor) const;
 
     // This is identical with above get_data_by_sel(), but:
     // 1) The result is a view
@@ -916,7 +867,7 @@ public: // Read/access interfaces
     //
     template<typename T1, typename T2, typename F, typename ... Ts>
     DataFramePtrView<IndexType>
-    get_view_by_sel (const char *name1, const char *name2, F &sel_functor);
+    get_view_by_sel(const char *name1, const char *name2, F &sel_functor);
 
     // This does the same function as above get_data_by_sel() but operating
     // on three columns.
@@ -937,10 +888,10 @@ public: // Read/access interfaces
     template<typename T1, typename T2, typename T3, typename F,
              typename ... Ts>
     DataFrame
-    get_data_by_sel (const char *name1,
-                     const char *name2,
-                     const char *name3,
-                     F &sel_functor) const;
+    get_data_by_sel(const char *name1,
+                    const char *name2,
+                    const char *name3,
+                    F &sel_functor) const;
 
     // This is identical with above get_data_by_sel(), but:
     // 1) The result is a view
@@ -961,10 +912,10 @@ public: // Read/access interfaces
     template<typename T1, typename T2, typename T3, typename F,
              typename ... Ts>
     DataFramePtrView<IndexType>
-    get_view_by_sel (const char *name1,
-                     const char *name2,
-                     const char *name3,
-                     F &sel_functor);
+    get_view_by_sel(const char *name1,
+                    const char *name2,
+                    const char *name3,
+                    F &sel_functor);
 
     // It returns a DataFrame (including the index and data columns)
     // containing the data from uniform random selection.
@@ -986,7 +937,7 @@ public: // Read/access interfaces
     //
     template<typename ... Ts>
     DataFrame
-    get_data_by_rand (random_policy spec, double n, size_type seed = 0) const;
+    get_data_by_rand(random_policy spec, double n, size_type seed = 0) const;
 
     // It behaves like get_data_by_rand(), but it returns a DataFrameView.
     // A view is a DataFrame that is a reference to the original DataFrame.
@@ -1008,15 +959,17 @@ public: // Read/access interfaces
     //
     template<typename ... Ts>
     DataFramePtrView<IndexType>
-    get_view_by_rand (random_policy spec, double n, size_type seed = 0) const;
+    get_view_by_rand(random_policy spec, double n, size_type seed = 0) const;
 
     // It returns a const reference to the index container
     //
-    inline const IndexVecType &get_index () const  { return (indices_); }
+    inline const IndexVecType &get_index() const  { return (indices_); }
 
     // It returns a reference to the index container
     //
-    inline IndexVecType &get_index ()  { return (indices_); }
+    inline IndexVecType &get_index()  { return (indices_); }
+
+public:  // Visitors
 
     // This is the most generalized visit function. It visits multiple
     // columns with the corresponding function objects sequentially.
@@ -1040,7 +993,7 @@ public: // Read/access interfaces
     //
     template<typename ... Ts>
     void
-    multi_visit (Ts ... args);
+    multi_visit(Ts ... args);
 
     // It passes the values of each index and each named column to the
     // functor visitor sequentially from beginning to end
@@ -1052,7 +1005,7 @@ public: // Read/access interfaces
     //
     template<typename T, typename V>
     V &
-    visit (const char *name, V &visitor);
+    visit(const char *name, V &visitor);
 
     // It passes the values of each index and the two named columns to the
     // functor visitor sequentially from beginning to end
@@ -1100,11 +1053,11 @@ public: // Read/access interfaces
     //
     template<typename T1, typename T2, typename T3, typename T4, typename V>
     V &
-    visit (const char *name1,
-           const char *name2,
-           const char *name3,
-           const char *name4,
-           V &visitor);
+    visit(const char *name1,
+          const char *name2,
+          const char *name3,
+          const char *name4,
+          V &visitor);
 
     // It passes the values of each index and the five named columns to the
     // functor visitor sequentially from beginning to end
@@ -1125,12 +1078,12 @@ public: // Read/access interfaces
     template<typename T1, typename T2, typename T3, typename T4, typename T5,
              typename V>
     V &
-    visit (const char *name1,
-           const char *name2,
-           const char *name3,
-           const char *name4,
-           const char *name5,
-           V &visitor);
+    visit(const char *name1,
+          const char *name2,
+          const char *name3,
+          const char *name4,
+          const char *name5,
+          V &visitor);
 
     // This is similar to visit(), but it passes a const reference to the index
     // vector and the named column vector at once the functor visitor.
@@ -1143,7 +1096,7 @@ public: // Read/access interfaces
     //
     template<typename T, typename V>
     V &
-    single_act_visit (const char *name, V &visitor) const;
+    single_act_visit(const char *name, V &visitor) const;
 
     // This is similar to visit(), but it passes a const reference to the index
     // vector and the two named column vectors at once the functor visitor.
@@ -1158,7 +1111,7 @@ public: // Read/access interfaces
     //
     template<typename T1, typename T2, typename V>
     V &
-    single_act_visit (const char *name1, const char *name2, V &visitor);
+    single_act_visit(const char *name1, const char *name2, V &visitor);
 
 public:  // Operators
 
@@ -1171,7 +1124,7 @@ public:  // Operators
     //
     template<typename ... Ts>
     bool
-    is_equal (const DataFrame &rhs) const;
+    is_equal(const DataFrame &rhs) const;
 
     // It iterates over all indices in rhs and modifyies all the data
     // columns in self that correspond to the given index value.
@@ -1188,23 +1141,198 @@ public:  // Operators
     modify_by_idx(DataFrame &rhs,
                   sort_state already_sorted = sort_state::not_sorted);
 
+public:  // Utilities and miscellaneous
+
+    // Make all data columns the same length as the index.
+    // If any data column is shorter than the index column, it will be padded
+    // by nan.
+    // This is also called by sort(), before sorting
+    //
+    // Ts: List all the types of all data columns.
+    //     A type should be specified in the list only once.
+    //
+    template<typename ... Ts>
+    void
+    make_consistent();
+
+    // It returns a pair containing number of rows and columns.
+    // Note: Number of rows is the number of index rows. Not every column
+    //       has the same number of rows, necessarily. But each column has,
+    //       at most, this number of rows.
+    //
+    std::pair<size_type, size_type>
+    shape();
+
+    // This will reclaim unused/reserve memory from all columns including the
+    // index.
+    // If your DataFrame has grown organically from different data sources,
+    // shrink_to_fit() could potentially reduce your memory footprint
+    // significantly.
+    // After this call, any iterator or reference you hold to any data point
+    // in the DataFrame could be invalidated.
+    //
+    template<typename ... Ts>
+    void
+    shrink_to_fit();
+
+    // This static method generates a date/time-based index vector that could
+    // be fed directly to one of the load methods. Depending on the specified
+    // frequency, it generates specific timestamps (see below).
+    // It returns a vector of IndexType timestamps.
+    // Currently IndexType could be any built-in numeric type or DateTime
+    //
+    // start_datetime, end_datetime: They are the start/end date/times of
+    //     requested timestamps.
+    //     They must be in the following format:
+    //     MM/DD/YYYY [HH[:MM[:SS[.MMM]]]]
+    // t_freq: Specifies the timestamp frequency. Depending on the frequency,
+    //         and IndexType type specific timestamps are generated as follows:
+    //    - IndexType type of DateTime always generates timestamps of DateTime.
+    //    - Annual, monthly, weekly, and daily frequencies generates YYYYMMDD
+    //      timestamps.
+    //    - Hourly, minutely, and secondly frequencies generates epoch
+    //      timestamps (64 bit).
+    //    - Millisecondly frequency generates nano-second since epoch
+    //      timestamps (128 bit).
+    // increment: Increment in the units of the frequency
+    // tz: Time-zone of generated timestamps
+    //
+    // NOTE: It is the responsibility of the programmer to make sure
+    //       IndexType type is big enough to contain the frequency.
+    //
+    static std::vector<IndexType>
+    gen_datetime_index(const char *start_datetime,
+                       const char *end_datetime,
+                       time_frequency t_freq,
+                       long increment = 1,
+                       DT_TIME_ZONE tz = DT_TIME_ZONE::LOCAL);
+
+    // This static method generates a vector of sequential values of
+    // IndexType that could be fed directly to one of the load methods.
+    // The values are incremented by "increment".
+    // The index type must be incrementable.
+    // If by incrementing "start_value" by increment you would never reach
+    // "end_value", the behavior will be undefined.
+    // It returns a vector of IndexType values.
+    //
+    // start_value, end_value: Starting and ending values of IndexType.
+    //                         Start value is included. End value is excluded.
+    // increment: Increment by value
+    //
+    static std::vector<IndexType>
+    gen_sequence_index(const IndexType &start_value,
+                       const IndexType &end_value,
+                       long increment = 1);
+
+    // It outputs the content of DataFrame into the stream o.
+    // Currently two formats (i.e. csv, json) are supported specified by
+    // the iof parameter.
+    // The csv file format must be:
+    //     INDEX:<Number data points>:<values>
+    //     <Col1>:<Number data points>:<Col1 type>:<values>
+    //     <Col2>:<Number of data points>:<Col2 type>:<values>
+    //     .
+    //     .
+    //     .
+    // All empty lines or lines starting with # will be skipped.
+    //
+    // The JSON file format looks like this:
+    //     {
+    //     "INDEX":{"N":3,"T":"ulong","D":[123450,123451,123452]},
+    //     "col_3":{"N":3,"T":"double","D":[15.2,16.34,17.764]},
+    //     "col_4":{"N":3,"T":"int","D":[22,23,24]},
+    //     "col_str":{"N":3,"T":"string","D":["11","22","33"]},
+    //     "col_2":{"N":3,"T":"double","D":[8,9.001,10]},
+    //     "col_1":{"N":3,"T":"double","D":[1,2,3.456]}
+    //     }
+    // Please note DataFrame json does not follow json spec 100%. In json,
+    // there is not particular order in dictionary fields. But in DataFrame
+    // json:
+    // 1) Column “INDEX” must be the first column
+    // 2) Fields in column dictionaries must be in N, T, D order
+    //
+    // S: Output stream type
+    // Ts: List all the types of all data columns.
+    //     A type should be specified in the list only once.
+    // o: Reference to an streamable object (e.g. cout)
+    // values_only: If true, the name and type of each column is not written
+    // iof: Specifies the I/O format. The default is CSV
+    //
+    template<typename S, typename ... Ts>
+    bool
+    write(S &o,
+          bool values_only = false,
+          io_format iof = io_format::csv) const;
+
+    // Same as write() above, but executed asynchronously
+    //
+    template<typename S, typename ... Ts>
+    std::future<bool>
+    write_async(S &o,
+                bool values_only = false,
+                io_format iof = io_format::csv) const;
+
+    // It inputs the contents of a text file into itself (i.e. DataFrame).
+    // Currently two formats (i.e. csv, json) are supported specified by
+    // the iof parameter.
+    // The csv file format must be:
+    //     INDEX:<Number data points>:<values>
+    //     <Col1>:<Number data points>:<Col1 type>:<values>
+    //     <Col2>:<Number of data points>:<Col2 type>:<values>
+    //     .
+    //     .
+    //     .
+    // All empty lines or lines starting with # will be skipped.
+    //
+    // The JSON file format looks like this:
+    //     {
+    //     "INDEX":{"N":3,"T":"ulong","D":[123450,123451,123452]},
+    //     "col_3":{"N":3,"T":"double","D":[15.2,16.34,17.764]},
+    //     "col_4":{"N":3,"T":"int","D":[22,23,24]},
+    //     "col_str":{"N":3,"T":"string","D":["11","22","33"]},
+    //     "col_2":{"N":3,"T":"double","D":[8,9.001,10]},
+    //     "col_1":{"N":3,"T":"double","D":[1,2,3.456]}
+    //     }
+    // Please note DataFrame json does not follow json spec 100%. In json,
+    // there is not particular order in dictionary fields. But in DataFrame
+    // json:
+    // 1) Column “INDEX” must be the first column
+    // 2) Fields in column dictionaries must be in N, T, D order
+    //
+    // file_name: Complete path to the file
+    // iof: Specifies the I/O format. The default is CSV
+    //
+    bool
+    read(const char *file_name, io_format iof = io_format::csv);
+
+    // Same as read() above, but executed asynchronously
+    //
+    std::future<bool>
+    read_async(const char *file_name, io_format iof = io_format::csv);
+
 private:  // Friend Operators
 
     template<typename DF, template<typename> class OPT, typename ... Ts>
-    friend DF binary_operation(const DF &lhs, const DF &rhs);
+    friend DF
+    binary_operation(const DF &lhs, const DF &rhs);
 
 protected:
 
     template<typename T1, typename T2>
-    size_type _load_pair(std::pair<T1, T2> &col_name_data);
+    size_type
+    _load_pair(std::pair<T1, T2> &col_name_data);
 
     template<typename T>
-    static inline constexpr T _get_nan();
+    static inline constexpr
+    T _get_nan();
 
     template<typename T>
-    static inline constexpr bool _is_nan(const T &val);
+    static inline constexpr bool
+    _is_nan(const T &val);
 
 private:  // Static helper functions
+
+    void read_json_(std::ifstream &file);
 
     template<typename T>
     static void
@@ -1218,7 +1346,8 @@ private:  // Static helper functions
     fill_missing_ffill_(std::vector<T> &vec, int limit, size_type col_num);
 
     template<typename T>
-    static void fill_missing_bfill_(std::vector<T> &vec, int limit);
+    static void
+    fill_missing_bfill_(std::vector<T> &vec, int limit);
 
     template<typename T,
              typename std::enable_if<
@@ -1240,14 +1369,16 @@ private:  // Static helper functions
     fill_missing_linter_(std::vector<T> &, const IndexVecType &, int);
 
     template<typename T>
-    static void drop_missing_rows_(T &vec,
-                                   const DropRowMap missing_row_map,
-                                   drop_policy policy,
-                                   size_type threshold,
-                                   size_type col_num);
+    static void
+    drop_missing_rows_(T &vec,
+                       const DropRowMap missing_row_map,
+                       drop_policy policy,
+                       size_type threshold,
+                       size_type col_num);
 
     template<typename T, typename ITR>
-    void setup_view_column_(const char *name, Index2D<ITR> range);
+    void
+    setup_view_column_(const char *name, Index2D<ITR> range);
 
     using IndexIdxVector = std::vector<std::tuple<size_type, size_type>>;
 
@@ -1274,16 +1405,20 @@ private:  // Static helper functions
     index_left_right_join_(const LHS_T &lhs, const RHS_T &rhs);
 
     template<typename V>
-    static void shift_right_(V &vec, size_type n);
+    static void
+    shift_right_(V &vec, size_type n);
 
     template<typename V>
-    static void shift_left_(V &vec, size_type n);
+    static void
+    shift_left_(V &vec, size_type n);
 
     template<typename V>
-    static void rotate_right_(V &vec, size_type n);
+    static void
+    rotate_right_(V &vec, size_type n);
 
     template<typename V>
-    static void rotate_left_(V &vec, size_type n);
+    static void
+    rotate_left_(V &vec, size_type n);
 
     // Visiting functors
 #   include <DataFrame/Internals/DataFrame_functors.h>
@@ -1291,36 +1426,41 @@ private:  // Static helper functions
 private:  // Tuple stuff
 
     template<typename ... Ts, typename F, std::size_t ... Is>
-    static void for_each_in_tuple_ (const std::tuple<Ts ...> &tu,
-                                    F func,
-                                    std::index_sequence<Is ...>);
+    static void
+    for_each_in_tuple_(const std::tuple<Ts ...> &tu,
+                       F func,
+                       std::index_sequence<Is ...>);
 
     template<typename ... Ts, typename F, std::size_t ... Is>
-    static void for_each_in_tuple_ (std::tuple<Ts ...> &tu,
-                                    F func,
-                                    std::index_sequence<Is ...>);
+    static void
+    for_each_in_tuple_(std::tuple<Ts ...> &tu,
+                       F func,
+                       std::index_sequence<Is ...>);
 
     template<typename ... Ts, typename F>
-    static void for_each_in_tuple_ (const std::tuple<Ts...> &tu, F func);
+    static void
+    for_each_in_tuple_(const std::tuple<Ts...> &tu, F func);
 
     template<typename ... Ts, typename F>
-    static void for_each_in_tuple_ (std::tuple<Ts...> &tu, F func);
+    static void
+    for_each_in_tuple_(std::tuple<Ts...> &tu, F func);
 };
 
 } // namespace hmdf
 
 // ----------------------------------------------------------------------------
 
-#  ifndef HMDF_DO_NOT_INCLUDE_TCC_FILES
-#    include <DataFrame/Internals/DataFrame_misc.tcc>
-#    include <DataFrame/Internals/DataFrame_set.tcc>
-#    include <DataFrame/Internals/DataFrame_get.tcc>
-#    include <DataFrame/Internals/DataFrame_read.tcc>
-#    include <DataFrame/Internals/DataFrame_opt.tcc>
-#    include <DataFrame/Internals/DataFrame_join.tcc>
-#    include <DataFrame/Internals/DataFrame_shift.tcc>
-#    include <DataFrame/Internals/DataFrame.tcc>
-#  endif // HMDF_DO_NOT_INCLUDE_TCC_FILES
+#ifndef HMDF_DO_NOT_INCLUDE_TCC_FILES
+#  include <DataFrame/Internals/DataFrame.tcc>
+#  include <DataFrame/Internals/DataFrame_get.tcc>
+#  include <DataFrame/Internals/DataFrame_join.tcc>
+#  include <DataFrame/Internals/DataFrame_misc.tcc>
+#  include <DataFrame/Internals/DataFrame_opt.tcc>
+#  include <DataFrame/Internals/DataFrame_read.tcc>
+#  include <DataFrame/Internals/DataFrame_set.tcc>
+#  include <DataFrame/Internals/DataFrame_shift.tcc>
+#  include <DataFrame/Internals/DataFrame_write.tcc>
+#endif // HMDF_DO_NOT_INCLUDE_TCC_FILES
 
 // ----------------------------------------------------------------------------
 

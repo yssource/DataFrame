@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <random>
 
 // ----------------------------------------------------------------------------
@@ -14,10 +15,38 @@
 namespace hmdf
 {
 
-#if defined(WIN32) || defined (_WIN32)
-#undef min
-#undef max
-#endif // defined(WIN32) || defined (_WIN32)
+#if defined(WIN32) || defined(_WIN32)
+#  ifdef min
+#    undef min
+#  endif // min
+#  ifdef max
+#    undef max
+#  endif // max
+#endif // WIN32 || _WIN32
+
+// ----------------------------------------------------------------------------
+
+template<typename S, typename T>
+inline static S &_write_json_df_index_(S &o, const T &value)  {
+
+    return (o << value);
+}
+
+// -------------------------------------
+
+template<typename S>
+inline static S &_write_json_df_index_(S &o, const DateTime &value)  {
+
+    return (o << value.time() << '.' << value.nanosec());
+}
+
+// -------------------------------------
+
+template<typename S>
+inline static S &_write_json_df_index_(S &o, const std::string &value)  {
+
+    return (o << '"' << value << '"');
+}
 
 // ----------------------------------------------------------------------------
 
@@ -31,6 +60,17 @@ DataFrame<I, H>::consistent_functor_<Ts ...>::operator() (T &vec) const  {
         typename std::remove_reference<decltype(vec)>::type::value_type;
 
     vec.resize(size, ValueType());
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename I, typename H>
+template<typename ... Ts>
+template<typename T>
+void
+DataFrame<I, H>::shrink_to_fit_functor_<Ts ...>::operator() (T &vec) const  {
+
+    vec.shrink_to_fit();
 }
 
 // ----------------------------------------------------------------------------
@@ -192,7 +232,7 @@ template<typename I, typename H>
 template<typename ... Ts>
 template<typename T>
 void
-DataFrame<I, H>::print_functor_<Ts ...>::operator() (const T &vec)  {
+DataFrame<I, H>::print_csv_functor_<Ts ...>::operator() (const T &vec)  {
 
     if (vec.empty())  return;
 
@@ -205,6 +245,10 @@ DataFrame<I, H>::print_functor_<Ts ...>::operator() (const T &vec)  {
             os << "<float>:";
         else if (typeid(ValueType) == typeid(double))
             os << "<double>:";
+        else if (typeid(ValueType) == typeid(short int))
+            os << "<short>:";
+        else if (typeid(ValueType) == typeid(unsigned short int))
+            os << "<ushort>:";
         else if (typeid(ValueType) == typeid(int))
             os << "<int>:";
         else if (typeid(ValueType) == typeid(unsigned int))
@@ -229,6 +273,66 @@ DataFrame<I, H>::print_functor_<Ts ...>::operator() (const T &vec)  {
     for (std::size_t i = 0; i < vec.size(); ++i)
         os << vec[i] << ',';
     os << '\n';
+
+    return;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename I, typename H>
+template<typename ... Ts>
+template<typename T>
+void
+DataFrame<I, H>::print_json_functor_<Ts ...>::operator() (const T &vec)  {
+
+    if (vec.empty())  return;
+
+    using VecType = typename std::remove_reference<T>::type;
+    using ValueType = typename VecType::value_type;
+
+    if (need_pre_comma)
+        os << ",\n";
+    if (! values_only)  {
+        os << '"' << name << "\":{\"N\":" << vec.size() << ',';
+        if (typeid(ValueType) == typeid(float))
+            os << "\"T\":\"float\",";
+        else if (typeid(ValueType) == typeid(double))
+            os << "\"T\":\"double\",";
+        else if (typeid(ValueType) == typeid(short int))
+            os << "\"T\":\"short\",";
+        else if (typeid(ValueType) == typeid(unsigned short int))
+            os << "\"T\":\"ushort\",";
+        else if (typeid(ValueType) == typeid(int))
+            os << "\"T\":\"int\",";
+        else if (typeid(ValueType) == typeid(unsigned int))
+            os << "\"T\":\"uint\",";
+        else if (typeid(ValueType) == typeid(long int))
+            os << "\"T\":\"long\",";
+        else if (typeid(ValueType) == typeid(long long int))
+            os << "\"T\":\"longlong\",";
+        else if (typeid(ValueType) == typeid(unsigned long int))
+            os << "\"T\":\"ulong\",";
+        else if (typeid(ValueType) == typeid(unsigned long long int))
+            os << "\"T\":\"ulonglong\",";
+        else if (typeid(ValueType) == typeid(std::string))
+            os << "\"T\":\"string\",";
+        else if (typeid(ValueType) == typeid(bool))
+            os << "\"T\":\"bool\",";
+        else if (typeid(ValueType) == typeid(DateTime))
+            os << "\"T\":\"DateTime\",";
+        else
+            os << "\"T\":\"N/A\",";
+    }
+
+    os << "\"D\":[";
+    if (! vec.empty())  {
+        _write_json_df_index_(os, vec[0]);
+        for (std::size_t i = 1; i < vec.size(); ++i)  {
+            os << ',';
+            _write_json_df_index_(os, vec[i]);
+        }
+    }
+    os << "]}";
 
     return;
 }
@@ -508,23 +612,26 @@ operator()(const T &vec)  {
 // ----------------------------------------------------------------------------
 
 template<typename I, typename H>
-template<typename ... Ts>
+template<typename IT, typename ... Ts>
 template<typename T>
 void
 DataFrame<I, H>::
-sel_load_functor_<Ts ...>::
+sel_load_functor_<IT, Ts ...>::
 operator() (const std::vector<T> &vec)  {
 
     std::vector<T>  new_col;
     const size_type vec_size = vec.size();
 
     new_col.reserve(std::min(sel_indices.size(), vec_size));
-    for (const auto citer : sel_indices)
-        if (citer < vec_size)
-            new_col.push_back(vec[citer]);
+    for (const auto citer : sel_indices)  {
+        const size_type index =
+            citer >= 0 ? citer : static_cast<IT>(indices_size) + citer;
+
+        if (index < vec_size)
+            new_col.push_back(vec[index]);
         else
             break;
-    new_col.shrink_to_fit();
+    }
     df.load_column(name, std::move(new_col), nan_policy::dont_pad_with_nans);
     return;
 }
@@ -532,23 +639,26 @@ operator() (const std::vector<T> &vec)  {
 // ----------------------------------------------------------------------------
 
 template<typename I, typename H>
-template<typename ... Ts>
+template<typename IT, typename ... Ts>
 template<typename T>
 void
 DataFrame<I, H>::
-sel_load_view_functor_<Ts ...>::
+sel_load_view_functor_<IT, Ts ...>::
 operator() (std::vector<T> &vec)  {
 
     VectorPtrView<T>    new_col;
     const size_type     vec_size = vec.size();
 
     new_col.reserve(std::min(sel_indices.size(), vec_size));
-    for (const auto citer : sel_indices)
-        if (citer < vec_size)
-            new_col.push_back(&(vec[citer]));
+    for (const auto citer : sel_indices)  {
+        const size_type index =
+            citer >= 0 ? citer : static_cast<IT>(indices_size) + citer;
+
+        if (index < vec_size)
+            new_col.push_back(&(vec[index]));
         else
             break;
-    new_col.shrink_to_fit();
+    }
 
     using data_vec_t = typename DataFramePtrView<I>::DataVec;
 

@@ -1,9 +1,9 @@
-#include <iostream>
+#include <DataFrame/Vectors/HeteroVector.h>
+
 #include <cassert>
+#include <iostream>
 #include <string>
 #include <typeinfo>
-
-#include <DataFrame/Vectors/HeteroVector.h>
 
 using namespace hmdf;
 

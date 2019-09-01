@@ -1,13 +1,13 @@
+#include <DataFrame/DataFrame.h>
+#include <DataFrame/DataFrameOperators.h>
+#include <DataFrame/DataFrameVisitors.h>
+
+#include <cassert>
+#include <cmath>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <typeinfo>
-#include <limits>
-#include <cmath>
-#include <cassert>
-
-#include <DataFrame/DataFrame.h>
-#include <DataFrame/DataFrameVisitors.h>
-#include <DataFrame/DataFrameOperators.h>
 
 using namespace hmdf;
 
@@ -122,6 +122,7 @@ int main(int argc, char *argv[]) {
     std::cout << std::endl;
 
     df.make_consistent<int, double, std::string>();
+    df.shrink_to_fit<int, double, std::string>();
     std::cout << "Printing integer vector AFTER making make_consistent ..."
               << std::endl;
     dvec = df.get_column<double> ("dbl_col");
@@ -155,7 +156,9 @@ int main(int argc, char *argv[]) {
         std::cout << iter << " ";
     std::cout << std::endl;
 
-    MyDataFrame df2 = df.get_data_by_idx<int, double, std::string>({ 3, 5 });
+    MyDataFrame df2 =
+        df.get_data_by_idx<int, double, std::string>(
+            Index2D<MyDataFrame::IndexType> { 3, 5 });
 
     std::cout << "Printing the second df after get_data_by_idx() ..."
               << std::endl;
@@ -168,7 +171,8 @@ int main(int argc, char *argv[]) {
         std::cout << iter << " ";
     std::cout << std::endl;
 
-    MyDataFrame df3 = df.get_data_by_loc<int, double, std::string>({ 1, 2 });
+    MyDataFrame df3 = df.get_data_by_loc<int, double, std::string>
+        (Index2D<long> { 1, 2 });
 
     df3.write<std::ostream, int, double, std::string>(std::cout);
     std::cout << "Printing the second df after get_data_by_loc() ..."
@@ -343,11 +347,16 @@ int main(int argc, char *argv[]) {
         std::cout << "\nTesting read() ..." << std::endl;
 
         MyDataFrame         df_read;
-        // std::future<bool>   fut2 =
-        //     df_read.read_async("../test/sample_data.csv");
-        std::future<bool>   fut2 = df_read.read_async("sample_data.csv");
+        try  {
+            // std::future<bool>   fut2 =
+            //     df_read.read_async("../test/sample_data.csv");
+            std::future<bool>   fut2 = df_read.read_async("sample_data.csv");
 
-        fut2.get();
+            fut2.get();
+        }
+        catch (const DataFrameError &ex)  {
+            std::cout << ex.what() << std::endl;
+        }
         df_read.write<std::ostream,
                       int,
                       unsigned long,
@@ -357,7 +366,12 @@ int main(int argc, char *argv[]) {
 
         StdDataFrame<std::string>   df_read_str;
 
-        df_read_str.read_async("sample_data_string_index.csv");
+        try  {
+            df_read_str.read("sample_data_string_index.csv");
+        }
+        catch (const DataFrameError &ex)  {
+            std::cout << ex.what() << std::endl;
+        }
         df_read_str.write<std::ostream,
                           int,
                           unsigned long,
@@ -367,7 +381,12 @@ int main(int argc, char *argv[]) {
 
         StdDataFrame<DateTime>  df_read_dt;
 
-        df_read_dt.read_async("sample_data_dt_index.csv");
+        try  {
+            df_read_dt.read("sample_data_dt_index.csv");
+        }
+        catch (const DataFrameError &ex)  {
+            std::cout << ex.what() << std::endl;
+        }
         df_read_dt.write<std::ostream,
                          int,
                          unsigned long,
@@ -490,10 +509,10 @@ int main(int argc, char *argv[]) {
                      std::make_pair("col_3", d3),
                      std::make_pair("col_4", d4));
 
-        MyDataFrame df2 = df.get_data_by_loc<double>({ 3, 6 });
-        MyDataFrame df3 = df.get_data_by_loc<double>({ 0, 7 });
-        MyDataFrame df4 = df.get_data_by_loc<double>({ -4, -1 });
-        MyDataFrame df5 = df.get_data_by_loc<double>({ -4, 6 });
+        MyDataFrame df2 = df.get_data_by_loc<double>(Index2D<long> { 3, 6 });
+        MyDataFrame df3 = df.get_data_by_loc<double>(Index2D<long> { 0, 7 });
+        MyDataFrame df4 = df.get_data_by_loc<double>(Index2D<long> { -4, -1 });
+        MyDataFrame df5 = df.get_data_by_loc<double>(Index2D<long> { -4, 6 });
 
         df.write<std::ostream, double>(std::cout);
         df2.write<std::ostream, double>(std::cout);
@@ -502,13 +521,15 @@ int main(int argc, char *argv[]) {
         df5.write<std::ostream, double>(std::cout);
 
         try  {
-            MyDataFrame df2 = df.get_data_by_loc<double>({ 3, 8 });
+            MyDataFrame df2 =
+                df.get_data_by_loc<double>(Index2D<long> { 3, 8 });
         }
         catch (const BadRange &ex)  {
             std::cout << "Caught: " << ex.what() << std::endl;
         }
         try  {
-            MyDataFrame df2 = df.get_data_by_loc<double>({ -8, -1 });
+            MyDataFrame df2 =
+                df.get_data_by_loc<double>(Index2D<long> { -8, -1 });
         }
         catch (const BadRange &ex)  {
             std::cout << "Caught: " << ex.what() << std::endl;
@@ -537,8 +558,10 @@ int main(int argc, char *argv[]) {
 
         typedef DataFrameView<unsigned long> MyDataFrameView;
 
-        MyDataFrameView dfv = df.get_view_by_loc<double, std::string>({ 3, 6 });
+        MyDataFrameView dfv =
+            df.get_view_by_loc<double, std::string>(Index2D<long> { 3, 6 });
 
+        dfv.shrink_to_fit<double, std::string>();
         dfv.write<std::ostream, double, std::string>(std::cout);
         dfv.get_column<double>("col_3")[0] = 88.0;
         assert(dfv.get_column<double>("col_3")[0] ==
@@ -606,9 +629,11 @@ int main(int argc, char *argv[]) {
         typedef DataFrameView<unsigned long> MyDataFrameView;
 
         MyDataFrame     df2 =
-            df.get_data_by_idx<double, int>({ 123452, 123460 });
+            df.get_data_by_idx<double, int>(
+                Index2D<MyDataFrame::IndexType> { 123452, 123460 });
         MyDataFrameView dfv =
-            df.get_view_by_idx<double, int>({ 123452, 123460 });
+            df.get_view_by_idx<double, int>(
+                Index2D<MyDataFrame::IndexType> { 123452, 123460 });
 
         df.write<std::ostream, double, int>(std::cout);
         df2.write<std::ostream, double, int>(std::cout);
@@ -1146,8 +1171,13 @@ int main(int argc, char *argv[]) {
         MyDataFrame df1;
         MyDataFrame df2;
 
-        df1.read("sample_data.csv");
-        df2.read("sample_data.csv");
+        try  {
+            df1.read("sample_data.csv");
+            df2.read("sample_data.csv");
+        }
+        catch (const DataFrameError &ex)  {
+            std::cout << ex.what() << std::endl;
+        }
 
         MyDataFrame result =
             df_plus<MyDataFrame,
@@ -1187,8 +1217,13 @@ int main(int argc, char *argv[]) {
         MyDataFrame df1;
         MyDataFrame df2;
 
-        df1.read("sample_data.csv");
-        df2.read("sample_data.csv");
+        try  {
+            df1.read("sample_data.csv");
+            df2.read("sample_data.csv");
+        }
+        catch (const DataFrameError &ex)  {
+            std::cout << ex.what() << std::endl;
+        }
 
         // Notice I am omitting std::string here, since minus is not defined for
         // std::string, and hence it won't compile
@@ -2639,6 +2674,7 @@ int main(int argc, char *argv[]) {
             df.get_view_by_sel<double, decltype(functor), double, std::string>
                 ("col_1", functor);
 
+        result.shrink_to_fit<double, std::string>();
         assert(result.get_index().size() == 3);
         assert(result.get_column<double>("col_1").size() == 3);
         assert(result.get_column<std::string>("col_str").size() == 3);
@@ -2988,7 +3024,37 @@ int main(int argc, char *argv[]) {
     }
 
     {
+        std::cout << "\nTesting write(json) ..." << std::endl;
+
+        std::vector<unsigned long>  idx =
+            { 123450, 123451, 123452, 123453, 123454, 123455, 123456,
+              123457, 123458, 123459, 123460};
+        std::vector<double> d1 = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+        std::vector<double> d2 = { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 };
+        std::vector<double> d3 = { 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 };
+        std::vector<double> d4 = { 22, 23, 24, 25, 26, 27 };
+        std::vector<std::string> s1 = { "11", "22", "33", "aa", "bb", "cc",
+                                        "dd", "tt", "uu", "ii", "88" };
+        MyDataFrame         df;
+
+        df.load_data(std::move(idx),
+                     std::make_pair("col_1", d1),
+                     std::make_pair("col_2", d2),
+                     std::make_pair("col_3", d3),
+                     std::make_pair("col_str", s1));
+        df.load_column("col_4",
+                       std::move(d4),
+                       nan_policy::dont_pad_with_nans);
+
+        std::cout << "Writing in JSON:" << std::endl;
+        df.write<std::ostream, int, double, std::string>(std::cout,
+                                                         false,
+                                                         io_format::json);
+    }
+
+    {
         std::cout << "\nTesting Diff ..." << std::endl;
+
         double my_nan = std::numeric_limits<double>::quiet_NaN();
         double epsilon = 0.0000001;
         std::vector<unsigned long>  idx =
@@ -3101,6 +3167,235 @@ int main(int argc, char *argv[]) {
         assert(result6[7] == 17.94);
         assert(fabs(result6[8] - -1.907) < epsilon);
         assert(result6[9] == 0.66);
+    }
+
+    {
+        std::cout << "\nTesting reading/writing JSON ..." << std::endl;
+
+        MyDataFrame df;
+
+        try  {
+            df.read("sample_data.json", io_format::json);
+            assert(df.get_index().size() == 12);
+            assert(df.get_index()[0] == 123450);
+            assert(df.get_index()[4] == 123454);
+            assert(df.get_index()[11] == 555555);
+            assert(df.get_column<double>("col_4").size() == 6);
+            assert(df.get_column<double>("col_4")[0] == 22.0);
+            assert(df.get_column<double>("col_4")[4] == 26.0);
+            assert(df.get_column<double>("col_4")[5] == 27.0);
+            assert(df.get_column<std::string>("col_str").size() == 12);
+            assert(df.get_column<std::string>("col_str")[0] == "11");
+            assert(df.get_column<std::string>("col_str")[8] == "uu");
+            assert(df.get_column<std::string>("col_str")[11] ==
+                       "This is a test");
+            assert(df.get_column<double>("col_1").size() == 12);
+            assert(df.get_column<double>("col_2").size() == 12);
+            assert(df.get_column<double>("col_2")[6] == 14.0);
+            assert(df.get_column<double>("col_2")[11] == 777.78);
+            assert(df.get_column<double>("col_3").size() == 12);
+            assert(df.get_column<double>("col_3")[3] == 18.0);
+            assert(df.get_column<double>("col_3")[11] == 555.543);
+        }
+        catch (const DataFrameError &ex)  {
+            std::cout << ex.what() << std::endl;
+        }
+    }
+
+    {
+        std::cout << "\nTesting get_data_by_loc(locations) ..." << std::endl;
+
+        std::vector<unsigned long>  idx =
+            { 123450, 123451, 123452, 123450, 123455, 123450, 123449 };
+        std::vector<double> d1 = { 1, 2, 3, 4, 5, 6, 7 };
+        std::vector<double> d2 = { 8, 9, 10, 11, 12, 13, 14 };
+        std::vector<double> d3 = { 15, 16, 17, 18, 19, 20, 21 };
+        std::vector<double> d4 = { 22, 23, 24, 25 };
+        MyDataFrame         df;
+
+        df.load_data(std::move(idx),
+                     std::make_pair("col_1", d1),
+                     std::make_pair("col_2", d2),
+                     std::make_pair("col_3", d3),
+                     std::make_pair("col_4", d4));
+
+        MyDataFrame df2 =
+            df.get_data_by_loc<double>(std::vector<long> { 3, 6 });
+        MyDataFrame df3 =
+            df.get_data_by_loc<double>(std::vector<long> { -4, -1 , 5});
+
+        assert(df2.get_index().size() == 2);
+        assert(df2.get_column<double>("col_3").size() == 2);
+        assert(df2.get_column<double>("col_2").size() == 2);
+        assert(df2.get_index()[0] == 123450);
+        assert(df2.get_index()[1] == 123449);
+        assert(df2.get_column<double>("col_3")[0] == 18.0);
+        assert(df2.get_column<double>("col_2")[1] == 14.0);
+        assert(std::isnan(df2.get_column<double>("col_4")[1]));
+
+        assert(df3.get_index().size() == 3);
+        assert(df3.get_column<double>("col_3").size() == 3);
+        assert(df3.get_column<double>("col_2").size() == 3);
+        assert(df3.get_column<double>("col_1").size() == 3);
+        assert(df3.get_index()[0] == 123450);
+        assert(df3.get_index()[1] == 123449);
+        assert(df3.get_index()[2] == 123450);
+        assert(df3.get_column<double>("col_1")[0] == 4.0);
+        assert(df3.get_column<double>("col_2")[2] == 13.0);
+        assert(df3.get_column<double>("col_4")[0] == 25.0);
+        assert(std::isnan(df3.get_column<double>("col_4")[1]));
+        assert(std::isnan(df3.get_column<double>("col_4")[2]));
+    }
+
+    {
+        std::cout << "\nTesting get_view_by_loc(locations) ..." << std::endl;
+
+        std::vector<unsigned long>  idx =
+            { 123450, 123451, 123452, 123450, 123455, 123450, 123449 };
+        std::vector<double> d1 = { 1, 2, 3, 4, 5, 6, 7 };
+        std::vector<double> d2 = { 8, 9, 10, 11, 12, 13, 14 };
+        std::vector<double> d3 = { 15, 16, 17, 18, 19, 20, 21 };
+        std::vector<double> d4 = { 22, 23, 24, 25 };
+        MyDataFrame         df;
+
+        df.load_data(std::move(idx),
+                     std::make_pair("col_1", d1),
+                     std::make_pair("col_2", d2),
+                     std::make_pair("col_3", d3),
+                     std::make_pair("col_4", d4));
+
+        auto    dfv1 =
+            df.get_view_by_loc<double>(std::vector<long> { 3, 6 });
+        auto    dfv2 =
+            df.get_view_by_loc<double>(std::vector<long> { -4, -1 , 5});
+
+        assert(dfv1.get_index().size() == 2);
+        assert(dfv1.get_column<double>("col_3").size() == 2);
+        assert(dfv1.get_column<double>("col_2").size() == 2);
+        assert(dfv1.get_index()[0] == 123450);
+        assert(dfv1.get_index()[1] == 123449);
+        assert(dfv1.get_column<double>("col_3")[0] == 18.0);
+        assert(dfv1.get_column<double>("col_2")[1] == 14.0);
+        assert(std::isnan(dfv1.get_column<double>("col_4")[1]));
+
+        assert(dfv2.get_index().size() == 3);
+        assert(dfv2.get_column<double>("col_3").size() == 3);
+        assert(dfv2.get_column<double>("col_2").size() == 3);
+        assert(dfv2.get_column<double>("col_1").size() == 3);
+        assert(dfv2.get_index()[0] == 123450);
+        assert(dfv2.get_index()[1] == 123449);
+        assert(dfv2.get_index()[2] == 123450);
+        assert(dfv2.get_column<double>("col_1")[0] == 4.0);
+        assert(dfv2.get_column<double>("col_2")[2] == 13.0);
+        assert(dfv2.get_column<double>("col_4")[0] == 25.0);
+        assert(std::isnan(dfv2.get_column<double>("col_4")[1]));
+        assert(std::isnan(dfv2.get_column<double>("col_4")[2]));
+
+        dfv2.get_column<double>("col_1")[0] = 101.0;
+        assert(dfv2.get_column<double>("col_1")[0] == 101.0);
+        assert(df.get_column<double>("col_1")[3] == 101.0);
+    }
+
+    {
+        std::cout << "\nTesting get_data_by_idx(values) ..." << std::endl;
+
+        std::vector<unsigned long>  idx =
+            { 123450, 123451, 123452, 123450, 123455, 123450, 123449 };
+        std::vector<double> d1 = { 1, 2, 3, 4, 5, 6, 7 };
+        std::vector<double> d2 = { 8, 9, 10, 11, 12, 13, 14 };
+        std::vector<double> d3 = { 15, 16, 17, 18, 19, 20, 21 };
+        std::vector<double> d4 = { 22, 23, 24, 25 };
+        MyDataFrame         df;
+
+        df.load_data(std::move(idx),
+                     std::make_pair("col_1", d1),
+                     std::make_pair("col_2", d2),
+                     std::make_pair("col_3", d3),
+                     std::make_pair("col_4", d4));
+
+        MyDataFrame df2 =
+            df.get_data_by_idx<double>(
+                std::vector<MyDataFrame::IndexType> { 123452, 123455 });
+        MyDataFrame df3 =
+            df.get_data_by_idx<double>(
+                std::vector<MyDataFrame::IndexType> { 123449, 123450 });
+
+        assert(df2.get_index().size() == 2);
+        assert(df2.get_column<double>("col_3").size() == 2);
+        assert(df2.get_column<double>("col_2").size() == 2);
+        assert(df2.get_index()[0] == 123452);
+        assert(df2.get_index()[1] == 123455);
+        assert(df2.get_column<double>("col_3")[0] == 17.0);
+        assert(df2.get_column<double>("col_2")[1] == 12.0);
+        assert(std::isnan(df2.get_column<double>("col_4")[1]));
+
+        assert(df3.get_index().size() == 4);
+        assert(df3.get_column<double>("col_3").size() == 4);
+        assert(df3.get_column<double>("col_2").size() == 4);
+        assert(df3.get_column<double>("col_1").size() == 4);
+        assert(df3.get_index()[0] == 123450);
+        assert(df3.get_index()[1] == 123450);
+        assert(df3.get_index()[2] == 123450);
+        assert(df3.get_index()[3] == 123449);
+        assert(df3.get_column<double>("col_1")[0] == 1.0);
+        assert(df3.get_column<double>("col_2")[2] == 13.0);
+        assert(df3.get_column<double>("col_4")[0] == 22.0);
+        assert(df3.get_column<double>("col_4")[1] == 25.0);
+        assert(std::isnan(df3.get_column<double>("col_4")[2]));
+        assert(std::isnan(df3.get_column<double>("col_4")[3]));
+    }
+
+    {
+        std::cout << "\nTesting get_view_by_idx(values) ..." << std::endl;
+
+        std::vector<unsigned long>  idx =
+            { 123450, 123451, 123452, 123450, 123455, 123450, 123449 };
+        std::vector<double> d1 = { 1, 2, 3, 4, 5, 6, 7 };
+        std::vector<double> d2 = { 8, 9, 10, 11, 12, 13, 14 };
+        std::vector<double> d3 = { 15, 16, 17, 18, 19, 20, 21 };
+        std::vector<double> d4 = { 22, 23, 24, 25 };
+        MyDataFrame         df;
+
+        df.load_data(std::move(idx),
+                     std::make_pair("col_1", d1),
+                     std::make_pair("col_2", d2),
+                     std::make_pair("col_3", d3),
+                     std::make_pair("col_4", d4));
+
+        auto    dfv1 =
+            df.get_view_by_idx<double>(
+                std::vector<MyDataFrame::IndexType> { 123452, 123455 });
+        auto    dfv2 =
+            df.get_view_by_idx<double>(
+                std::vector<MyDataFrame::IndexType> { 123449, 123450 });
+
+        assert(dfv1.get_index().size() == 2);
+        assert(dfv1.get_column<double>("col_3").size() == 2);
+        assert(dfv1.get_column<double>("col_2").size() == 2);
+        assert(dfv1.get_index()[0] == 123452);
+        assert(dfv1.get_index()[1] == 123455);
+        assert(dfv1.get_column<double>("col_3")[0] == 17.0);
+        assert(dfv1.get_column<double>("col_2")[1] == 12.0);
+        assert(std::isnan(dfv1.get_column<double>("col_4")[1]));
+
+        assert(dfv2.get_index().size() == 4);
+        assert(dfv2.get_column<double>("col_3").size() == 4);
+        assert(dfv2.get_column<double>("col_2").size() == 4);
+        assert(dfv2.get_column<double>("col_1").size() == 4);
+        assert(dfv2.get_index()[0] == 123450);
+        assert(dfv2.get_index()[1] == 123450);
+        assert(dfv2.get_index()[2] == 123450);
+        assert(dfv2.get_index()[3] == 123449);
+        assert(dfv2.get_column<double>("col_1")[0] == 1.0);
+        assert(dfv2.get_column<double>("col_2")[2] == 13.0);
+        assert(dfv2.get_column<double>("col_4")[0] == 22.0);
+        assert(dfv2.get_column<double>("col_4")[1] == 25.0);
+        assert(std::isnan(dfv2.get_column<double>("col_4")[2]));
+        assert(std::isnan(dfv2.get_column<double>("col_4")[3]));
+
+        dfv2.get_column<double>("col_1")[0] = 101.0;
+        assert(dfv2.get_column<double>("col_1")[0] == 101.0);
+        assert(df.get_column<double>("col_1")[0] == 101.0);
     }
 
     return (0);

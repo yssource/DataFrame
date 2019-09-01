@@ -13,6 +13,17 @@
 namespace hmdf
 {
 
+#if defined(WIN32) || defined(_WIN32)
+#  ifdef min
+#    undef min
+#  endif // min
+#  ifdef max
+#    undef max
+#  endif // max
+#endif // WIN32 || _WIN32
+
+// ----------------------------------------------------------------------------
+
 template<typename I, typename  H>
 std::pair<typename DataFrame<I, H>::size_type,
           typename DataFrame<I, H>::size_type>
@@ -582,6 +593,43 @@ DataFrame<I, H>::get_data_by_idx (Index2D<IndexType> range) const  {
 
 template<typename I, typename  H>
 template<typename ... Ts>
+DataFrame<I, H>
+DataFrame<I, H>::get_data_by_idx(const std::vector<IndexType> &values) const  {
+
+    const std::unordered_set<IndexType> val_table(values.begin(), values.end());
+    IndexVecType                        new_index;
+    std::vector<size_type>              locations;
+    const size_type                     values_s = values.size();
+    const size_type                     idx_s = indices_.size();
+
+    new_index.reserve(values_s);
+    locations.reserve(values_s);
+    for (size_type i = 0; i < idx_s; ++i)
+        if (val_table.find(indices_[i]) != val_table.end())  {
+            new_index.push_back(indices_[i]);
+            locations.push_back(i);
+        }
+
+    DataFrame   df;
+
+    df.load_index(std::move(new_index));
+    for (auto col_citer : column_tb_)  {
+        sel_load_functor_<size_type, Ts ...>    functor (
+            col_citer.first.c_str(),
+            locations,
+            idx_s,
+            df);
+
+        data_[col_citer.second].change(functor);
+    }
+
+    return (df);
+}
+
+// ----------------------------------------------------------------------------
+ 
+template<typename I, typename  H>
+template<typename ... Ts>
 DataFrameView<I>
 DataFrame<I, H>::get_view_by_idx (Index2D<IndexType> range)  {
 
@@ -621,15 +669,58 @@ DataFrame<I, H>::get_view_by_idx (Index2D<IndexType> range)  {
 
 template<typename I, typename  H>
 template<typename ... Ts>
+DataFramePtrView<I> DataFrame<I, H>::
+get_view_by_idx(const std::vector<IndexType> &values)  {
+
+    static_assert(std::is_base_of<HeteroVector, H>::value,
+                  "Only a StdDataFrame can call get_view_by_idx()");
+
+    using TheView = DataFramePtrView<IndexType>;
+
+    const std::unordered_set<IndexType> val_table(values.begin(), values.end());
+    typename TheView::IndexVecType      new_index;
+    std::vector<size_type>              locations;
+    const size_type                     values_s = values.size();
+    const size_type                     idx_s = indices_.size();
+
+    new_index.reserve(values_s);
+    locations.reserve(values_s);
+    for (size_type i = 0; i < idx_s; ++i)
+        if (val_table.find(indices_[i]) != val_table.end())  {
+            new_index.push_back(&(indices_[i]));
+            locations.push_back(i);
+        }
+
+    TheView dfv;
+
+    dfv.indices_ = std::move(new_index);
+
+    for (auto col_citer : column_tb_)  {
+        sel_load_view_functor_<size_type, Ts ...>   functor (
+            col_citer.first.c_str(),
+            locations,
+            idx_s,
+            dfv);
+
+        data_[col_citer.second].change(functor);
+    }
+
+    return (dfv);
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename I, typename  H>
+template<typename ... Ts>
 DataFrame<I, H>
-DataFrame<I, H>::get_data_by_loc (Index2D<int> range) const  {
+DataFrame<I, H>::get_data_by_loc (Index2D<long> range) const  {
 
     if (range.begin < 0)
-        range.begin = static_cast<int>(indices_.size()) + range.begin;
+        range.begin = static_cast<long>(indices_.size()) + range.begin;
     if (range.end < 0)
-        range.end = static_cast<int>(indices_.size()) + range.end;
+        range.end = static_cast<long>(indices_.size()) + range.end;
 
-    if (range.end <= static_cast<int>(indices_.size()) &&
+    if (range.end <= static_cast<long>(indices_.size()) &&
         range.begin <= range.end && range.begin >= 0)  {
         DataFrame   df;
 
@@ -653,7 +744,7 @@ DataFrame<I, H>::get_data_by_loc (Index2D<int> range) const  {
 
     sprintf (buffer,
              "DataFrame::get_data_by_loc(): ERROR: "
-             "Bad begin, end range: %d, %d",
+             "Bad begin, end range: %ld, %ld",
              range.begin, range.end);
     throw BadRange (buffer);
 }
@@ -662,18 +753,51 @@ DataFrame<I, H>::get_data_by_loc (Index2D<int> range) const  {
 
 template<typename I, typename  H>
 template<typename ... Ts>
+DataFrame<I, H>
+DataFrame<I, H>::get_data_by_loc (const std::vector<long> &locations) const  {
+
+    const size_type idx_s = indices_.size();
+    DataFrame       df;
+    IndexVecType    new_index;
+
+    new_index.reserve(locations.size());
+    for (const auto citer: locations)  {
+        const size_type index =
+            citer >= 0 ? citer : static_cast<long>(idx_s) + citer;
+
+        new_index.push_back(indices_[index]);
+    }
+    df.load_index(std::move(new_index));
+
+    for (auto col_citer : column_tb_)  {
+        sel_load_functor_<long, Ts ...>  functor (
+            col_citer.first.c_str(),
+            locations,
+            idx_s,
+            df);
+
+        data_[col_citer.second].change(functor);
+    }
+
+    return (df);
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename I, typename  H>
+template<typename ... Ts>
 DataFrameView<I>
-DataFrame<I, H>::get_view_by_loc (Index2D<int> range)  {
+DataFrame<I, H>::get_view_by_loc (Index2D<long> range)  {
 
     static_assert(std::is_base_of<HeteroVector, H>::value,
                   "Only a StdDataFrame can call get_view_by_loc()");
 
     if (range.begin < 0)
-        range.begin = static_cast<int>(indices_.size()) + range.begin;
+        range.begin = static_cast<long>(indices_.size()) + range.begin;
     if (range.end < 0)
-        range.end = static_cast<int>(indices_.size()) + range.end;
+        range.end = static_cast<long>(indices_.size()) + range.end;
 
-    if (range.end <= static_cast<int>(indices_.size()) &&
+    if (range.end <= static_cast<long>(indices_.size()) &&
         range.begin <= range.end && range.begin >= 0)  {
         DataFrameView<IndexType>    dfv;
 
@@ -698,9 +822,48 @@ DataFrame<I, H>::get_view_by_loc (Index2D<int> range)  {
 
     sprintf (buffer,
              "DataFrame::get_view_by_loc(): ERROR: "
-             "Bad begin, end range: %d, %d",
+             "Bad begin, end range: %ld, %ld",
              range.begin, range.end);
     throw BadRange (buffer);
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename I, typename  H>
+template<typename ... Ts>
+DataFramePtrView<I>
+DataFrame<I, H>::get_view_by_loc (const std::vector<long> &locations)  {
+
+    static_assert(std::is_base_of<HeteroVector, H>::value,
+                  "Only a StdDataFrame can call get_view_by_loc()");
+
+    using TheView = DataFramePtrView<IndexType>;
+
+    TheView         dfv;
+    const size_type idx_s = indices_.size();
+
+    typename TheView::IndexVecType  new_index;
+
+    new_index.reserve(locations.size());
+    for (const auto citer: locations)  {
+        const size_type index =
+            citer >= 0 ? citer : static_cast<long>(idx_s) + citer;
+
+        new_index.push_back(&(indices_[index]));
+    }
+    dfv.indices_ = std::move(new_index);
+
+    for (auto col_citer : column_tb_)  {
+        sel_load_view_functor_<long, Ts ...>    functor (
+            col_citer.first.c_str(),
+            locations,
+            indices_.size(),
+            dfv);
+
+        data_[col_citer.second].change(functor);
+    }
+
+    return (dfv);
 }
 
 // ----------------------------------------------------------------------------
@@ -728,7 +891,7 @@ get_data_by_sel (const char *name, F &sel_functor) const  {
     const size_type         col_s = vec.size();
     std::vector<size_type>  col_indices;
 
-    col_indices.reserve(indices_.size() / 2);
+    col_indices.reserve(idx_s / 2);
     for (size_type i = 0; i < col_s; ++i)
         if (sel_functor (indices_[i], vec[i]))
             col_indices.push_back(i);
@@ -742,9 +905,10 @@ get_data_by_sel (const char *name, F &sel_functor) const  {
     df.load_index(std::move(new_index));
 
     for (auto col_citer : column_tb_)  {
-        sel_load_functor_<Ts ...>   functor (
+        sel_load_functor_<size_type, Ts ...>    functor (
             col_citer.first.c_str(),
             col_indices,
+            idx_s,
             df);
 
         data_[col_citer.second].change(functor);
@@ -781,7 +945,7 @@ get_view_by_sel (const char *name, F &sel_functor)  {
     const size_type         col_s = vec.size();
     std::vector<size_type>  col_indices;
 
-    col_indices.reserve(indices_.size() / 2);
+    col_indices.reserve(idx_s / 2);
     for (size_type i = 0; i < col_s; ++i)
         if (sel_functor (indices_[i], vec[i]))
             col_indices.push_back(i);
@@ -797,9 +961,10 @@ get_view_by_sel (const char *name, F &sel_functor)  {
     dfv.indices_ = std::move(new_index);
 
     for (auto col_citer : column_tb_)  {
-        sel_load_view_functor_<Ts ...>   functor (
+        sel_load_view_functor_<size_type, Ts ...>   functor (
             col_citer.first.c_str(),
             col_indices,
+            idx_s,
             dfv);
 
         data_[col_citer.second].change(functor);
@@ -837,6 +1002,7 @@ get_data_by_sel (const char *name1, const char *name2, F &sel_functor) const  {
         throw ColNotFound (buffer);
     }
 
+    const size_type         idx_s = indices_.size();
     const DataVec           &hv1 = data_[citer1->second];
     const DataVec           &hv2 = data_[citer2->second];
     const std::vector<T1>   &vec1 = hv1.template get_vector<T1>();
@@ -846,7 +1012,7 @@ get_data_by_sel (const char *name1, const char *name2, F &sel_functor) const  {
     const size_type         col_s = std::max(col_s1, col_s2);
     std::vector<size_type>  col_indices;
 
-    col_indices.reserve(indices_.size() / 2);
+    col_indices.reserve(idx_s / 2);
     for (size_type i = 0; i < col_s; ++i)
         if (sel_functor (indices_[i],
                          i < col_s1 ? vec1[i] : _get_nan<T1>(),
@@ -862,9 +1028,10 @@ get_data_by_sel (const char *name1, const char *name2, F &sel_functor) const  {
     df.load_index(std::move(new_index));
 
     for (auto col_citer : column_tb_)  {
-        sel_load_functor_<Ts ...>   functor (
+        sel_load_functor_<size_type, Ts ...>    functor (
             col_citer.first.c_str(),
             col_indices,
+            idx_s,
             df);
 
         data_[col_citer.second].change(functor);
@@ -909,12 +1076,13 @@ get_view_by_sel (const char *name1, const char *name2, F &sel_functor)  {
     const DataVec           &hv2 = data_[citer2->second];
     const std::vector<T1>   &vec1 = hv1.template get_vector<T1>();
     const std::vector<T2>   &vec2 = hv2.template get_vector<T2>();
+    const size_type         idx_s = indices_.size();
     const size_type         col_s1 = vec1.size();
     const size_type         col_s2 = vec2.size();
     const size_type         col_s = std::max(col_s1, col_s2);
     std::vector<size_type>  col_indices;
 
-    col_indices.reserve(indices_.size() / 2);
+    col_indices.reserve(idx_s / 2);
     for (size_type i = 0; i < col_s; ++i)
         if (sel_functor (indices_[i],
                          i < col_s1 ? vec1[i] : _get_nan<T1>(),
@@ -932,9 +1100,10 @@ get_view_by_sel (const char *name1, const char *name2, F &sel_functor)  {
     dfv.indices_ = std::move(new_index);
 
     for (auto col_citer : column_tb_)  {
-        sel_load_view_functor_<Ts ...>   functor (
+        sel_load_view_functor_<size_type, Ts ...>   functor (
             col_citer.first.c_str(),
             col_indices,
+            idx_s,
             dfv);
 
         data_[col_citer.second].change(functor);
@@ -985,6 +1154,7 @@ get_data_by_sel (const char *name1,
         throw ColNotFound (buffer);
     }
 
+    const size_type         idx_s = indices_.size();
     const DataVec           &hv1 = data_[citer1->second];
     const DataVec           &hv2 = data_[citer2->second];
     const DataVec           &hv3 = data_[citer3->second];
@@ -997,7 +1167,7 @@ get_data_by_sel (const char *name1,
     const size_type         col_s = std::max(std::max(col_s1, col_s2), col_s3);
     std::vector<size_type>  col_indices;
 
-    col_indices.reserve(indices_.size() / 2);
+    col_indices.reserve(idx_s / 2);
     for (size_type i = 0; i < col_s; ++i)
         if (sel_functor (indices_[i],
                          i < col_s1 ? vec1[i] : _get_nan<T1>(),
@@ -1014,9 +1184,10 @@ get_data_by_sel (const char *name1,
     df.load_index(std::move(new_index));
 
     for (auto col_citer : column_tb_)  {
-        sel_load_functor_<Ts ...>   functor (
+        sel_load_functor_<size_type, Ts ...>    functor (
             col_citer.first.c_str(),
             col_indices,
+            idx_s,
             df);
 
         data_[col_citer.second].change(functor);
@@ -1076,13 +1247,14 @@ get_view_by_sel (const char *name1,
     const std::vector<T1>   &vec1 = hv1.template get_vector<T1>();
     const std::vector<T2>   &vec2 = hv2.template get_vector<T2>();
     const std::vector<T3>   &vec3 = hv3.template get_vector<T3>();
+    const size_type         idx_s = indices_.size();
     const size_type         col_s1 = vec1.size();
     const size_type         col_s2 = vec2.size();
     const size_type         col_s3 = vec3.size();
     const size_type         col_s = std::max(std::max(col_s1, col_s2), col_s3);
     std::vector<size_type>  col_indices;
 
-    col_indices.reserve(indices_.size() / 2);
+    col_indices.reserve(idx_s / 2);
     for (size_type i = 0; i < col_s; ++i)
         if (sel_functor (indices_[i],
                          i < col_s1 ? vec1[i] : _get_nan<T1>(),
@@ -1101,9 +1273,10 @@ get_view_by_sel (const char *name1,
     dfv.indices_ = std::move(new_index);
 
     for (auto col_citer : column_tb_)  {
-        sel_load_view_functor_<Ts ...>   functor (
+        sel_load_view_functor_<size_type, Ts ...>   functor (
             col_citer.first.c_str(),
             col_indices,
+            idx_s,
             dfv);
 
         data_[col_citer.second].change(functor);

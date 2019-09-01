@@ -4,7 +4,7 @@
 ![GitHub tag (latest by date)](https://img.shields.io/github/tag-date/hosseinmoein/DataFrame.svg?color=blue&label=Official%20Release&style=popout)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/std/the-standard )
 
-![Alt text](docs/pandalion.png "C++ protecting Python")
+<img src="docs/pandalion.png" alt="drawing" width="500"/>
 
 # DataFrame
 This is a C++ statistical library that provides an interface similar to Pandas package in Python.<BR>
@@ -16,6 +16,11 @@ You can slice the data frame and instead of getting another data frame you can o
 Instances of DataFrame are not multithreaded safe. In other words, a single instance of DataFrame must not be used in multiple threads without protection. But DataFrame utilizes multithreading in two different ways:<BR>
 1. There are asynchronous versions of some methods. For example, you have both sort() and sort_async(). The latter returns a std::future which could execute in parallel.
 2. DataFrame uses multiple threads, internally and unbeknown to the user, in some of its algorithms when appropriate. User can control (or turn off) the multithreading by calling set_thread_level() which sets the max number of threads to be used. The default is 0. The optimal number of threads is a function of users hardware/software environment and usually obtained by trail and error. set_thread_level() and threading level in general is a static property and once set, it applies to all instances.
+
+<B>Date Time</B><BR>
+DateTime class included in this library is a very cool and handy object to manipulate date/time with nanosecond precision.
+
+---
 
 <B>Example Code</B>
 ```CPP
@@ -61,21 +66,25 @@ df.sort<double, int, double, std::string>("dbl_col_2");
 StatsVisitor<double>  stats_visitor;
 // Calculate the stats on column “dbl_col”
 df.visit<double>("dbl_col", stats_visitor);
-```
-<B>Date Time</B><BR>
-DateTime class included in this library is a very cool and handy object to manipulate date/time with nanosecond precision. 
+``` 
+
+---
 
 ## [DataFrame Documentation](docs/DataFrameDoc.pdf)
 [DateTime Documentation](docs/DateTimeDoc.pdf)
 
+---
+
 ## [DataFrame Test File](test/dataframe_tester.cc)
 [Heterogeneous Vectors Test File](test/vectors_tester.cc)<BR>
 [Date/Time Test File](test/date_time_tester.cc)
+  
+---
 
-## [Contributions](docs/CONTRIBUTING.md)
+[Contributions](docs/CONTRIBUTING.md)<BR>
+[License](License)
 
-## [License](License)
-
+---
 
 ### Installing using CMake
 ```bash
@@ -92,3 +101,36 @@ make install
 cd [Debug | Release]
 make uninstall
 ```
+---
+
+### Performance
+There is a test program [dataframe_performance](test/dataframe_performance.cc) that should give you some sense of how this library performs. As a comparison, there is also a Pandas Python [pandas_performance](test/pandas_performance.py) script that does exactly the same thing.<BR>
+dataframe_performance.cc is compiled with gcc compiler with -O3 flag.<BR>
+pandas_performance.py is ran with Python 3.7.<BR>
+I ran both on my mac-book, doing the following:<BR> 
+<img src="docs/MacSize.png" alt="drawing" width="500"/>
+
+1. Generate ~1.6 billion second resolution timestamps and load it into the DataFrame/Pandas as index.
+2. Generate ~1.6 billion random numbers each for 3 columns with normal, log normal, and exponential distributions and load them into the DataFrame/Pandas.
+3. Calculate the mean of each of the 3 columns.
+
+Result:
+```bash
+Prompt> time python pandas_performance.py
+All memory allocations are done. Calculating means ...
+
+real  17m18.916s
+user  4m47.113s
+sys   5m31.901s
+Prompt>
+Prompt>
+Prompt> time ../bin/Linux.GCC64/dataframe_performance
+All memory allocations are done. Calculating means ...
+
+real  6m40.222s
+user  2m54.362s
+sys   2m14.951s
+```
+The interesting part:<BR>
+In case of Pandas allocating memory and calculating means take almost the same time.<BR>
+In case of DataFrame 85% of the time is spent in allocating memory.

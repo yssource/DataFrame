@@ -3,15 +3,15 @@
 // Copyright (C) 2019-2022 Hossein Moein
 // Distributed under the BSD Software License (see file License)
 
-#include <DataFrame/Utils/FixedSizeString.h>
 #include <DataFrame/MMap/ObjectVector.h>
+#include <DataFrame/Utils/FixedSizeString.h>
 
 #ifndef _WIN32
 
-#include <string>
 #include <exception>
-#include <sys/types.h>
+#include <string>
 #include <sys/mman.h>
+#include <sys/types.h>
 
 //
 // There must be a nice concise language inside C++ trying to get out
@@ -348,10 +348,10 @@ template<typename T, typename B>
 template<typename I>
 void ObjectVector<T, B>::insert (iterator pos, I first, I last)  {
 
-    const long      int to_add = &(*last) - &(*first);
+    const size_type to_add = &(*last) - &(*first);
     const size_type pos_index = &(*pos) - &(*begin ());
 
-    BaseClass::truncate (BaseClass::_file_size + to_add * sizeof (value_type));
+    BaseClass::truncate(BaseClass::_file_size + to_add * sizeof (value_type));
 
     const iterator  new_pos = begin() + pos_index;
 

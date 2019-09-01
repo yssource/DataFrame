@@ -103,6 +103,7 @@ set(${LIBRARY_TARGET_NAME}_HDR
   include/DataFrame/Internals/DataFrame_join.tcc
   include/DataFrame/Internals/DataFrame_shift.tcc
   include/DataFrame/Internals/DataFrame_read.tcc
+  include/DataFrame/Internals/DataFrame_write.tcc
   include/DataFrame/Internals/DataFrame_set.tcc
   include/DataFrame/Internals/DataFrame_functors.h
   include/DataFrame/Internals/RandGen.tcc
@@ -212,6 +213,7 @@ include(AddUninstallTarget)
 
 # Build the test binary
 add_executable(dataframe_tester  test/dataframe_tester.cc)
+add_executable(dataframe_performance  test/dataframe_performance.cc)
 add_executable(vectors_tester    test/vectors_tester.cc)
 add_executable(vector_ptr_view_tester test/vector_ptr_view_tester.cc)
 add_executable(date_time_tester  test/date_time_tester.cc)
@@ -223,6 +225,9 @@ add_executable(gen_rand_tester  test/gen_rand_tester.cc)
 
 # Link the DataFrame library to the test binary
 target_link_libraries(dataframe_tester DataFrame)
+
+# Link the DataFrame library to the test binary
+target_link_libraries(dataframe_performance DataFrame)
 
 # Link the DataFrame library to the test binary
 target_link_libraries(vectors_tester DataFrame)
@@ -253,6 +258,7 @@ if (UNIX)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
   find_package(Threads REQUIRED)
   target_link_libraries(dataframe_tester Threads::Threads)
+  target_link_libraries(dataframe_performance Threads::Threads)
   target_link_libraries(vectors_tester Threads::Threads)
   target_link_libraries(vector_ptr_view_tester Threads::Threads)
   target_link_libraries(date_time_tester Threads::Threads)
@@ -265,6 +271,7 @@ endif (UNIX)
 
 if (UNIX AND NOT APPLE)
   target_link_libraries(dataframe_tester rt)
+  target_link_libraries(dataframe_performance rt)
   target_link_libraries(vectors_tester rt)
   target_link_libraries(vector_ptr_view_tester rt)
   target_link_libraries(date_time_tester rt)
@@ -309,25 +316,39 @@ add_test(NAME gen_rand_tester
 
 message("-- Copying files for testing")
 # Ctest require this files in the build dir, on all platforms
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.csv
-         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_dt_index.csv
-         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_string_index.csv
-         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.csv
+                   ${CMAKE_CURRENT_BINARY_DIR}/sample_data.csv)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.json
+                   ${CMAKE_CURRENT_BINARY_DIR}/sample_data.json)
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_dt_index.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/sample_data_dt_index.csv)
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_string_index.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/sample_data_string_index.csv)
 
-if (MSVC)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.csv
-           DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.csv
-           DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_dt_index.csv
-           DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_dt_index.csv
-           DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_string_index.csv
-           DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
-  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_string_index.csv
-           DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
-endif(MSVC)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.json
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.json
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_dt_index.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_dt_index.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_string_index.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_string_index.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
 message("-- Copying files for testing - done")

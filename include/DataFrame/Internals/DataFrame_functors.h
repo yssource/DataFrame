@@ -25,6 +25,17 @@ struct consistent_functor_ : DataVec::template visitor_base<Ts ...>  {
 
 // ----------------------------------------------------------------------------
 
+template<typename ... Ts>
+struct shrink_to_fit_functor_ : DataVec::template visitor_base<Ts ...>  {
+
+    inline shrink_to_fit_functor_ ()  {   }
+
+    template<typename T>
+    void operator() (T &vec) const;
+};
+
+// ----------------------------------------------------------------------------
+
 template<typename T, typename ... Ts>
 struct sort_functor_ : DataVec::template visitor_base<Ts ...>  {
 
@@ -158,13 +169,34 @@ struct bucket_functor_ : DataVec::template visitor_base<Ts ...>  {
 // ----------------------------------------------------------------------------
 
 template<typename ... Ts>
-struct print_functor_ : DataVec::template visitor_base<Ts ...>  {
+struct print_csv_functor_ : DataVec::template visitor_base<Ts ...>  {
 
-    inline print_functor_ (const char *n, bool vo, std::ostream &o)
+    inline print_csv_functor_ (const char *n, bool vo, std::ostream &o)
         : name(n), values_only(vo), os(o)  {   }
 
     const char      *name;
     const bool      values_only;
+    std::ostream    &os;
+
+    template<typename T>
+    void operator() (const T &vec);
+};
+
+
+// ----------------------------------------------------------------------------
+
+template<typename ... Ts>
+struct print_json_functor_ : DataVec::template visitor_base<Ts ...>  {
+
+    inline print_json_functor_ (const char *n,
+                                bool vo,
+                                bool npc,
+                                std::ostream &o)
+        : name(n), values_only(vo), need_pre_comma(npc), os(o)  {   }
+
+    const char      *name;
+    const bool      values_only;
+    const bool      need_pre_comma;
     std::ostream    &os;
 
     template<typename T>
@@ -371,17 +403,19 @@ struct get_row_functor_ : DataVec::template visitor_base<Ts ...>  {
 
 // ----------------------------------------------------------------------------
 
-template<typename ... Ts>
+template<typename IT, typename ... Ts>
 struct sel_load_functor_ : DataVec::template visitor_base<Ts ...>  {
 
     inline sel_load_functor_ (const char *n,
-                              const std::vector<size_type> &si,
+                              const std::vector<IT> &si,
+                              size_type is,
                               DataFrame &d)
-        : name (n), sel_indices (si), df(d)  {   }
+        : name (n), sel_indices (si), indices_size(is), df(d)  {   }
 
-    const char                      *name;
-    const std::vector<size_type>    &sel_indices;
-    DataFrame                       &df;
+    const char              *name;
+    const std::vector<IT>   &sel_indices;
+    const size_type         indices_size;
+    DataFrame               &df;
 
     template<typename T>
     void operator() (const std::vector<T> &vec);
@@ -389,17 +423,19 @@ struct sel_load_functor_ : DataVec::template visitor_base<Ts ...>  {
 
 // ----------------------------------------------------------------------------
 
-template<typename ... Ts>
+template<typename IT, typename ... Ts>
 struct sel_load_view_functor_ : DataVec::template visitor_base<Ts ...>  {
 
     inline sel_load_view_functor_ (const char *n,
-                                   const std::vector<size_type> &si,
+                                   const std::vector<IT> &si,
+                                   size_type is,
                                    DataFramePtrView<IndexType> &d)
-        : name (n), sel_indices (si), dfv(d)  {   }
+        : name (n), sel_indices (si), indices_size(is), dfv(d)  {   }
 
-    const char                      *name;
-    const std::vector<size_type>    &sel_indices;
-    DataFramePtrView<IndexType>     &dfv;
+    const char                  *name;
+    const std::vector<IT>       &sel_indices;
+    const size_type             indices_size;
+    DataFramePtrView<IndexType> &dfv;
 
     template<typename T>
     void operator() (std::vector<T> &vec);

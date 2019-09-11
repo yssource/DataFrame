@@ -8,6 +8,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
+#include <functional>
 #include <iostream>
 #include <string.h>
 
@@ -29,7 +30,7 @@ class   VirtualString  {
 
 public:
 
-    using size_type = size_t;
+    using size_type = std::size_t;
     using value_type = char;
     using pointer = value_type *;
     using const_pointer = const value_type *;
@@ -255,6 +256,11 @@ public:
 
     inline void clear () noexcept  { *string_ = 0; }
 
+    // These two make it compatible with std::string
+    //
+    inline void resize (size_type) noexcept  {  }
+    inline void resize (size_type, value_type) noexcept  {  }
+
     // const utility methods.
     //
     inline const_pointer c_str () const noexcept  { return (string_); }
@@ -264,6 +270,18 @@ public:
     }
     inline size_type size () const noexcept { return (::strlen(string_)); }
     inline bool empty () const noexcept  { return (*string_ == 0); }
+
+    // Fowler–Noll–Vo (FNV-1a) hash function
+    // This is for 64-bit systems
+    //
+    inline size_type hash () const noexcept {
+
+        size_type       h = 14695981039346656037UL; // offset basis
+        const_pointer   s = string_;
+
+        while (*(s++)) { h = (h ^ *s) * 1099511628211UL; } // 64bit prime
+        return (h);
+    }
 
 private:
 
@@ -339,6 +357,20 @@ using String1K = FixedSizeString<1023>;
 using String2K = FixedSizeString<2047>;
 
 } // namespace hmdf
+
+// ----------------------------------------------------------------------------
+
+namespace std  {
+template<>
+struct  hash<typename hmdf::VirtualString>  {
+
+    inline size_t operator()(const hmdf::VirtualString &key) const noexcept {
+
+        return (key.hash());
+    }
+};
+
+} // namespace std
 
 // ----------------------------------------------------------------------------
 

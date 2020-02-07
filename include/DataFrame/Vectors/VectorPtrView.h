@@ -639,7 +639,7 @@ public:
 // ----------------------------------------------------------------------------
 
 template<typename T>
-class   VectorConstPtrView  {
+class LIBRARY_API VectorConstPtrView {
 
 private:
 

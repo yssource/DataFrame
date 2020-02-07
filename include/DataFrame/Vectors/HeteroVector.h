@@ -43,7 +43,7 @@ namespace hmdf
 // are partly inspired by Andy G's Blog at:
 // https://gieseanw.wordpress.com/2017/05/03/a-true-heterogeneous-container/
 //
-struct  HeteroVector  {
+struct LIBRARY_API HeteroVector {
 
 public:
 

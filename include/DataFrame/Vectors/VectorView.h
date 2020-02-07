@@ -540,7 +540,7 @@ public:
 // ----------------------------------------------------------------------------
 
 template <typename T>
-class   VectorConstView  {
+class LIBRARY_API VectorConstView {
 
 public:
 

@@ -334,7 +334,7 @@ private:
 //       responsibility of the programmer to take care of that.
 //
 template <unsigned int S>
-class   FixedSizeString : public VirtualString  {
+class LIBRARY_API FixedSizeString : public VirtualString {
 
 public:
 

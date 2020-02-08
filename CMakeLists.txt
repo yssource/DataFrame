@@ -121,20 +121,50 @@ set(${LIBRARY_TARGET_NAME}_HDR
   include/DataFrame/MMap/ObjectVector.tcc
 )
 
-add_definitions(-DLIBRARY_EXPORTS)
-
 # Build the library
-if (UNIX)
-  add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_SRC})
-endif(UNIX)
+option(BUILD_SHARED_LIBS "Build shared library" ON)
+option(BUILD_STATIC_LIBS "Build static library" ON)
 
-if (MSVC)
-  add_definitions(-D _CRT_SECURE_NO_WARNINGS)
-  add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_SRC})
-endif(MSVC)
+# Export no symbols by default (if the compiler supports it).
+# This makes e.g. GCC's "visibility behavior" consistent with MSVC's. 
+# On Windows/MSVC this is a noop.
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-if (MINGW)
-  add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_SRC})
+
+# Always include the source and build directories in the include path.
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+include(GenerateExportHeader)
+# add_definitions(-DLIBRARY_EXPORTS)
+if(BUILD_SHARED_LIBS)
+  # Build shared library
+  # target_compile_definitions(${LIBRARY_TARGET_NAME} PUBLIC LIBRARY_EXPORTS)
+  if (MSVC)
+    add_definitions(-D _CRT_SECURE_NO_WARNINGS)
+  endif(MSVC)
+
+  add_library(${LIBRARY_TARGET_NAME}_shared SHARED ${${LIBRARY_TARGET_NAME}_SRC})
+  SET_TARGET_PROPERTIES(${LIBRARY_TARGET_NAME}_shared PROPERTIES OUTPUT_NAME ${LIBRARY_TARGET_NAME})
+  SET_TARGET_PROPERTIES(${LIBRARY_TARGET_NAME}_shared PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+
+  string(TOLOWER ${LIBRARY_TARGET_NAME} dataframe)
+
+  GENERATE_EXPORT_HEADER(${LIBRARY_TARGET_NAME}_shared
+    BASE_NAME ${dataframe}
+    EXPORT_MACRO_NAME LIBRARY_API
+    EXPORT_FILE_NAME ${dataframe}_exports.h
+    STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC)
+endif()
+if(BUILD_STATIC_LIBS)
+  # Build static library
+  if (MSVC)
+    add_definitions(-D _CRT_SECURE_NO_WARNINGS)
+  endif(MSVC)
+
+  add_library(${LIBRARY_TARGET_NAME} STATIC ${${LIBRARY_TARGET_NAME}_SRC})
+  SET_TARGET_PROPERTIES(${LIBRARY_TARGET_NAME} PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+  set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES COMPILE_FLAGS -DLIBSHARED_AND_STATIC_STATIC_DEFINE)
 endif()
 
 # Set two minimum target properties for the library.
@@ -154,12 +184,17 @@ target_include_directories(${LIBRARY_TARGET_NAME}
     "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 
 # Specify installation targets, typology and destination folders.
-install(TARGETS ${LIBRARY_TARGET_NAME}
+install(TARGETS ${LIBRARY_TARGET_NAME} ${LIBRARY_TARGET_NAME}_shared
         EXPORT  ${PROJECT_NAME}
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
 )
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dataframe_exports.h"
+  DESTINATION "include/${PROJECT_NAME}"  # target directory
+  COMPONENT dev
+  )
 
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}" # src
         DESTINATION "include"  # target directory

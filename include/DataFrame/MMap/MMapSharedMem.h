@@ -37,8 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace hmdf
 {
-
-class   MMapSharedMem : public MMapBase  {
+class LIBRARY_API MMapSharedMem : public MMapBase {
 
 public:
 

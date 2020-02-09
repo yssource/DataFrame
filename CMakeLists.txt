@@ -133,7 +133,7 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 
 # Always include the source and build directories in the include path.
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 include(GenerateExportHeader)
 # add_definitions(-DLIBRARY_EXPORTS)
@@ -153,7 +153,7 @@ if(BUILD_SHARED_LIBS)
   GENERATE_EXPORT_HEADER(${LIBRARY_TARGET_NAME}_shared
     BASE_NAME ${dataframe}
     EXPORT_MACRO_NAME LIBRARY_API
-    EXPORT_FILE_NAME ${dataframe}_exports.h
+    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/DataFrame/dataframe_exports.h
     STATIC_DEFINE SHARED_EXPORTS_BUILT_AS_STATIC)
 endif()
 if(BUILD_STATIC_LIBS)
@@ -181,7 +181,13 @@ set_target_properties(${LIBRARY_TARGET_NAME}
 #         cmake-packages.7.html#creating-relocatable-packages
 target_include_directories(${LIBRARY_TARGET_NAME}
     PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
     "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
+
+target_include_directories(${LIBRARY_TARGET_NAME}_shared
+  PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
+  "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 
 # Specify installation targets, typology and destination folders.
 install(TARGETS ${LIBRARY_TARGET_NAME} ${LIBRARY_TARGET_NAME}_shared
@@ -191,7 +197,7 @@ install(TARGETS ${LIBRARY_TARGET_NAME} ${LIBRARY_TARGET_NAME}_shared
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
 )
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dataframe_exports.h"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/DataFrame/dataframe_exports.h"
   DESTINATION "include/${PROJECT_NAME}"  # target directory
   COMPONENT dev
   )
@@ -251,3 +257,150 @@ endif(MSVC)
 
 # Add the uninstall target
 include(AddUninstallTarget)
+
+
+# Build the test binary
+add_executable(dataframe_tester  test/dataframe_tester.cc)
+add_executable(dataframe_performance  test/dataframe_performance.cc)
+add_executable(vectors_tester    test/vectors_tester.cc)
+add_executable(vector_ptr_view_tester test/vector_ptr_view_tester.cc)
+add_executable(date_time_tester  test/date_time_tester.cc)
+# add_executable(mmfile_tester     test/mmfile_tester.cc)
+# add_executable(obj_vector_tester test/obj_vector_tester.cc)
+# add_executable(obj_vector_erase_tester test/obj_vector_erase_tester.cc)
+# add_executable(sharedmem_tester  test/sharedmem_tester.cc)
+add_executable(gen_rand_tester  test/gen_rand_tester.cc)
+
+# Link the DataFrame library to the test binary
+target_link_libraries(dataframe_tester ${LIBRARY_TARGET_NAME}_shared)
+
+# Link the DataFrame library to the test binary
+target_link_libraries(dataframe_performance ${LIBRARY_TARGET_NAME}_shared)
+
+# Link the DataFrame library to the test binary
+target_link_libraries(vectors_tester ${LIBRARY_TARGET_NAME}_shared)
+
+# Link the DataFrame library to the test binary
+target_link_libraries(vector_ptr_view_tester ${LIBRARY_TARGET_NAME}_shared)
+
+# Link the DataFrame library to the test binary
+target_link_libraries(date_time_tester ${LIBRARY_TARGET_NAME}_shared)
+
+# Link the DataFrame library to the test binary
+# target_link_libraries(mmfile_tester ${LIBRARY_TARGET_NAME}_shared)
+
+# Link the DataFrame library to the test binary
+# target_link_libraries(obj_vector_tester ${LIBRARY_TARGET_NAME}_shared)
+
+# Link the DataFrame library to the test binary
+# target_link_libraries(obj_vector_erase_tester ${LIBRARY_TARGET_NAME}_shared)
+
+# Link the DataFrame library to the test binary
+# target_link_libraries(sharedmem_tester ${LIBRARY_TARGET_NAME}_shared)
+
+# Link the DataFrame library to the test binary
+target_link_libraries(gen_rand_tester ${LIBRARY_TARGET_NAME}_shared)
+
+if (UNIX)
+  # Find pthreads library
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+  find_package(Threads REQUIRED)
+  target_link_libraries(dataframe_tester Threads::Threads)
+  target_link_libraries(dataframe_performance Threads::Threads)
+  target_link_libraries(vectors_tester Threads::Threads)
+  target_link_libraries(vector_ptr_view_tester Threads::Threads)
+  target_link_libraries(date_time_tester Threads::Threads)
+  # target_link_libraries(mmfile_tester Threads::Threads)
+  # target_link_libraries(obj_vector_tester Threads::Threads)
+  # target_link_libraries(obj_vector_erase_tester Threads::Threads)
+  # target_link_libraries(sharedmem_tester Threads::Threads)
+  target_link_libraries(gen_rand_tester Threads::Threads)
+endif (UNIX)
+
+if (UNIX AND NOT APPLE)
+  target_link_libraries(dataframe_tester rt)
+  target_link_libraries(dataframe_performance rt)
+  target_link_libraries(vectors_tester rt)
+  target_link_libraries(vector_ptr_view_tester rt)
+  target_link_libraries(date_time_tester rt)
+  # target_link_libraries(mmfile_tester rt)
+  # target_link_libraries(obj_vector_tester rt)
+  # target_link_libraries(obj_vector_erase_tester rt)
+  # target_link_libraries(sharedmem_tester rt)
+  target_link_libraries(gen_rand_tester rt)
+endif()
+
+# Enable ctest, testing so we can see if unit tests pass or fail in CI
+enable_testing()
+add_test(NAME dataframe_tester
+         COMMAND dataframe_tester
+         WORKING_DIRECTORY $<TARGET_FILE_DIR:dataframe_tester>)
+
+# For some unknown reason to me, this test sigfaults in AppVeyor
+#
+# add_test(NAME vectors_tester
+#          COMMAND vectors_tester
+#          WORKING_DIRECTORY $<TARGET_FILE_DIR:vectors_tester>)
+
+add_test(NAME vector_ptr_view_tester
+         COMMAND vector_ptr_view_tester
+         WORKING_DIRECTORY $<TARGET_FILE_DIR:vector_ptr_view_tester>)
+add_test(NAME date_time_tester
+         COMMAND date_time_tester
+         WORKING_DIRECTORY $<TARGET_FILE_DIR:date_time_tester>)
+
+# For some unknown reason to me, this test hangs in Travis CI
+#
+# add_test(NAME mmfile_tester
+#          COMMAND mmfile_tester
+#          WORKING_DIRECTORY $<TARGET_FILE_DIR:mmfile_tester>)
+
+# add_test(NAME obj_vector_tester
+#          COMMAND obj_vector_tester
+#          WORKING_DIRECTORY $<TARGET_FILE_DIR:obj_vector_tester>)
+
+# add_test(NAME obj_vector_erase_tester
+#          COMMAND obj_vector_erase_tester
+#          WORKING_DIRECTORY $<TARGET_FILE_DIR:obj_vector_erase_tester>)
+add_test(NAME gen_rand_tester
+         COMMAND gen_rand_tester
+         WORKING_DIRECTORY $<TARGET_FILE_DIR:gen_rand_tester>)
+
+message("-- Copying files for testing")
+# Ctest require this files in the build dir, on all platforms
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.csv
+                   ${CMAKE_CURRENT_BINARY_DIR}/sample_data.csv)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.json
+                   ${CMAKE_CURRENT_BINARY_DIR}/sample_data.json)
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_dt_index.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/sample_data_dt_index.csv)
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_string_index.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/sample_data_string_index.csv)
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.json
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data.json
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_dt_index.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_dt_index.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_string_index.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Debug)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test/sample_data_string_index.csv
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin/Release)
+message("-- Copying files for testing - done")

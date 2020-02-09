@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(DataFrame VERSION 1.0.0)
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Produce cmpile_commands.json
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -129,6 +130,7 @@ if(BUILD_SHARED_LIBS)
   # Build shared library
   set(SHARED_SUFFIX "_shared")
   if(MSVC)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     add_definitions(-D _CRT_SECURE_NO_WARNINGS)
   endif(MSVC)
 
@@ -269,8 +271,8 @@ endif(MSVC)
 # Add the uninstall target
 include(AddUninstallTarget)
 
-foreach(SUFFIX ${SHARED_SUFFIX} "dummpy")
-  if("${SUFFIX}" STREQUAL "dummpy")
+foreach(SUFFIX ${SHARED_SUFFIX} "dummy")
+  if("${SUFFIX}" STREQUAL "dummy")
     set(SUFFIX "")
   endif()
   # Build the test binary

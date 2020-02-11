@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 #include <atomic>
+#include <thread>
 
 #pragma once
 
@@ -71,9 +72,8 @@ protected:
     ThreadGranularity() = default;
 
 private:
-
-    static unsigned int         num_of_threads_;
-    static const unsigned int   supported_threads_;
+    static inline unsigned int num_of_threads_ {0};
+    static inline const unsigned int supported_threads_ {std::thread::hardware_concurrency()};
 };
 
 // ----------------------------------------------------------------------------

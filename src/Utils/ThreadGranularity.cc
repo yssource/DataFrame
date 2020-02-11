@@ -36,9 +36,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace hmdf
 {
 
-unsigned int        ThreadGranularity::num_of_threads_ = 0;
-const unsigned int  ThreadGranularity::supported_threads_ =
-    std::thread::hardware_concurrency();
+// unsigned int        ThreadGranularity::num_of_threads_ = 0;
+// const unsigned int  ThreadGranularity::supported_threads_ =
+//     std::thread::hardware_concurrency();
 
 } // namespace hmdf
 

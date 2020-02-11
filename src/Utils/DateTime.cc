@@ -47,43 +47,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace hmdf
 {
 
-const char  *DateTime::TIMEZONES_[] =
-{
-    "GMT",
-    "America/Buenos_Aires",
-    "America/Chicago",
-    "America/Los_Angeles",
-    "America/Mexico_City",
-    "America/New_York",
-    "Asia/Dubai",
-    "Asia/Hong_Kong",
-    "Asia/Shanghai",
-    "Asia/Singapore",
-    "Asia/Tehran",
-    "Asia/Tel_Aviv",
-    "Asia/Tokyo",
-    "Australia/Melbourne",
-    "Australia/NSW",
-    "Brazil/East",
-    "Europe/Berlin",
-    "Europe/London",
-    "Europe/Moscow",
-    "Europe/Paris",
-    "Europe/Rome",
-    "Europe/Vienna",
-    "Europe/Zurich",
-    "UTC",
-    "Asia/Seoul",
-    "Asia/Taipei",
-    "Eurpoe/Stockholm",
-    "NZ",
-    "Europe/Oslo",
-    "Europe/Warsaw",
-    "Europe/Budapest"
-};
-
-const DateTime::DT_initializer  DateTime::dt_init_;
-
 // ----------------------------------------------------------------------------
 
 DateTime::DT_initializer::DT_initializer() noexcept  {
@@ -94,28 +57,6 @@ DateTime::DT_initializer::DT_initializer() noexcept  {
     ::tzset ();
 #endif // _WIN32
 }
-
-// ----------------------------------------------------------------------------
-
-const char *const   DateTime::MONTH_[] =
-{
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-};
-const char *const   DateTime::MONTH_BR_[] =
-{
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-};
-const char *const   DateTime::WDAY_[] =
-{
-    "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
-    "Friday", "Saturday"
-};
-const char *const   DateTime::WDAY_BR_[] =
-{
-    "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-};
 
 // ----------------------------------------------------------------------------
 

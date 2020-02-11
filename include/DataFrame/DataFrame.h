@@ -39,7 +39,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <future>
 #include <map>
 
-#include <DataFrame/Internals/DataFrame_get.tcc>
 // ----------------------------------------------------------------------------
 
 namespace hmdf

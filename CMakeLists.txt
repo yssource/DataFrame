@@ -133,9 +133,9 @@ include(GenerateExportHeader)
 if(BUILD_SHARED_LIBS)
   # Build shared library
   set(SHARED_SUFFIX "_shared")
-  if(MSVC)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-  endif(MSVC)
+  # if(MSVC)
+  #   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  # endif(MSVC)
 
   add_library(${LIBRARY_TARGET_NAME}${SHARED_SUFFIX} SHARED
               ${${LIBRARY_TARGET_NAME}_SRC})

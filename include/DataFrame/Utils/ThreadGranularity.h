@@ -78,8 +78,7 @@ private:
 
 // ----------------------------------------------------------------------------
 
-struct  SpinLock  {
-
+struct LIBRARY_API SpinLock {
     SpinLock () = default;
     ~SpinLock() = default;
 
@@ -101,8 +100,7 @@ private:
 
 // ----------------------------------------------------------------------------
 
-struct  SpinGuard  {
-
+struct LIBRARY_API SpinGuard {
     inline
     SpinGuard(SpinLock *l) noexcept : lock_(l)  { if (lock_)  lock_->lock(); }
     inline ~SpinGuard() noexcept  { if (lock_)  lock_->unlock(); }

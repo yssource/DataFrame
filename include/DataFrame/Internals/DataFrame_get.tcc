@@ -32,22 +32,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <random>
 #include <unordered_set>
 
-#if defined(WIN32) || defined(_WIN32)
-#ifdef DataFrame_shared_EXPORTS
-#undef DataFrame_shared_EXPORTS
-#endif  // DataFrame_shared_EXPORTS
-#endif  // WIN32 || _WIN32
-
+// #if defined(WIN32) || defined(_WIN32)
+// #ifdef DataFrame_shared_EXPORTS
+// #undef DataFrame_shared_EXPORTS
+// #endif  // DataFrame_shared_EXPORTS
+// #endif  // WIN32 || _WIN32
+// #undef LIBRARY_API
 // ----------------------------------------------------------------------------
 
 namespace hmdf
 {
-
-template<typename I, typename  H>
-std::pair<typename DataFrame<I, H>::size_type,
-          typename DataFrame<I, H>::size_type>
-DataFrame<I, H>::shape() const  {
-
+template <typename I, typename H>
+std::pair<typename DataFrame<I, H>::size_type, typename DataFrame<I, H>::size_type>
+DataFrame<I, H>::shape() const
+{
     return (std::make_pair(indices_.size(), column_tb_.size()));
 }
 

@@ -27,12 +27,12 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#define DataFrame_shared_EXPORTS
-
 #include <DataFrame/DataFrame.h>
 
 #include <random>
 #include <unordered_set>
+
+#define DataFrame_shared_EXPORTS
 // ----------------------------------------------------------------------------
 
 namespace hmdf

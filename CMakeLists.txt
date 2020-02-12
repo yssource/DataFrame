@@ -125,13 +125,16 @@ option(BUILD_STATIC_LIBS "Build static library" ON)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
+if(MSVC)
+  add_definitions(-D _CRT_SECURE_NO_WARNINGS)
+endif(MSVC)
+
 include(GenerateExportHeader)
 if(BUILD_SHARED_LIBS)
   # Build shared library
   set(SHARED_SUFFIX "_shared")
   if(MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    add_definitions(-D _CRT_SECURE_NO_WARNINGS)
   endif(MSVC)
 
   add_library(${LIBRARY_TARGET_NAME}${SHARED_SUFFIX} SHARED
@@ -157,19 +160,18 @@ endif()
 if(BUILD_STATIC_LIBS)
   # Build static library
   set(STATIC_SUFFIX "")
-  if(MSVC)
-    add_definitions(-D _CRT_SECURE_NO_WARNINGS)
-  endif(MSVC)
-
   add_library(${LIBRARY_TARGET_NAME}${STATIC_SUFFIX} STATIC
               ${${LIBRARY_TARGET_NAME}_SRC})
   set_target_properties(${LIBRARY_TARGET_NAME}${STATIC_SUFFIX}
                         PROPERTIES OUTPUT_NAME ${LIBRARY_TARGET_NAME})
   set_target_properties(${LIBRARY_TARGET_NAME}${STATIC_SUFFIX}
                         PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-  set_target_properties(
-    ${LIBRARY_TARGET_NAME}${STATIC_SUFFIX}
-    PROPERTIES COMPILE_FLAGS -DLIBSHARED_AND_STATIC_STATIC_DEFINE)
+  # If the same sources are used to create both a shared and a static library,
+  # the uppercased symbol ${BASE_NAME}_STATIC_DEFINE should be used when
+  # building the static library:
+  # ${BASE_NAME} is DATAFRAME
+  set_target_properties(${LIBRARY_TARGET_NAME}${STATIC_SUFFIX}
+                        PROPERTIES COMPILE_FLAGS -DDATAFRAME_STATIC_DEFINE)
 endif()
 
 # Set two minimum target properties for the library. See

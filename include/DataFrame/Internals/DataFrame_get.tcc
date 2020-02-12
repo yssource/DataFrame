@@ -32,7 +32,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <random>
 #include <unordered_set>
 
-#define DataFrame_shared_EXPORTS
+#if defined(WIN32) || defined(_WIN32)
+#ifdef DataFrame_shared_EXPORTS
+#undef DataFrame_shared_EXPORTS
+#endif  // DataFrame_shared_EXPORTS
+#endif  // WIN32 || _WIN32
+
 // ----------------------------------------------------------------------------
 
 namespace hmdf

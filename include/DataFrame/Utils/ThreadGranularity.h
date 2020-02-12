@@ -50,7 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace hmdf
 {
 
-struct LIBRARY_API ThreadGranularity {
+struct DATAFRAME_API ThreadGranularity {
 
     static inline void
     set_thread_level(unsigned int n)  { num_of_threads_ = n; }
@@ -78,7 +78,7 @@ private:
 
 // ----------------------------------------------------------------------------
 
-struct LIBRARY_API SpinLock {
+struct DATAFRAME_API SpinLock {
     SpinLock () = default;
     ~SpinLock() = default;
 
@@ -100,7 +100,7 @@ private:
 
 // ----------------------------------------------------------------------------
 
-struct LIBRARY_API SpinGuard {
+struct DATAFRAME_API SpinGuard {
     inline
     SpinGuard(SpinLock *l) noexcept : lock_(l)  { if (lock_)  lock_->lock(); }
     inline ~SpinGuard() noexcept  { if (lock_)  lock_->unlock(); }

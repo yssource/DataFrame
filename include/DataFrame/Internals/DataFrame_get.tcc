@@ -37,7 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // #undef DataFrame_shared_EXPORTS
 // #endif  // DataFrame_shared_EXPORTS
 // #endif  // WIN32 || _WIN32
-// #undef LIBRARY_API
 // ----------------------------------------------------------------------------
 
 namespace hmdf

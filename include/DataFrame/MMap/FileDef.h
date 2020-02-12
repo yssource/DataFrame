@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace hmdf
 {
 
-class LIBRARY_API FileDef {
+class DATAFRAME_API FileDef {
 
 public:
 

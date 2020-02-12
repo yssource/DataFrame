@@ -145,17 +145,19 @@ if(BUILD_SHARED_LIBS)
                         PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
   string(TOLOWER ${LIBRARY_TARGET_NAME} dataframe)
+  string(TOUPPER ${LIBRARY_TARGET_NAME} up_dataframe)
 
   generate_export_header(
     ${LIBRARY_TARGET_NAME}${SHARED_SUFFIX}
     BASE_NAME
     ${dataframe}
     EXPORT_MACRO_NAME
-    LIBRARY_API
+    DATAFRAME_API
     EXPORT_FILE_NAME
     ${CMAKE_CURRENT_BINARY_DIR}/include/DataFrame/dataframe_exports.h
-    STATIC_DEFINE
-    SHARED_EXPORTS_BUILT_AS_STATIC)
+    )
+    # STATIC_DEFINE
+    # ${up_dataframe}_BUILT_AS_STATIC)
 endif()
 if(BUILD_STATIC_LIBS)
   # Build static library

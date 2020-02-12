@@ -48,7 +48,7 @@ namespace hmdf
 // The following constants are for formatting values in
 // DateTime::string_format().
 //
-enum class LIBRARY_API DT_FORMAT : unsigned short int {
+enum class DATAFRAME_API DT_FORMAT : unsigned short int {
     AMR_DT      = 1,   // e.g. 09/16/99
     AMR_DT_CTY  = 2,   // e.g. 09/16/1999
     EUR_DT      = 3,   // e.g. 16/09/99
@@ -65,7 +65,7 @@ enum class LIBRARY_API DT_FORMAT : unsigned short int {
 // DO NOT change the values of these enums. They are offsets to an
 // static array.
 //
-enum class LIBRARY_API DT_TIME_ZONE : short int {
+enum class DATAFRAME_API DT_TIME_ZONE : short int {
     LOCAL             = -2,
     GMT               = 0,
     AM_BUENOS_AIRES   = 1,
@@ -103,7 +103,7 @@ enum class LIBRARY_API DT_TIME_ZONE : short int {
 // 1 - 7 (Sunday - Saturday)
 // DO NOT change the numbers
 //
-enum class LIBRARY_API DT_WEEKDAY : unsigned char {
+enum class DATAFRAME_API DT_WEEKDAY : unsigned char {
     BAD_DAY = 0,
     SUN     = 1,
     MON     = 2,
@@ -117,7 +117,7 @@ enum class LIBRARY_API DT_WEEKDAY : unsigned char {
 // 1 - 12 (January - December)
 // DO NOT change the numbers
 //
-enum class LIBRARY_API DT_MONTH : unsigned char {
+enum class DATAFRAME_API DT_MONTH : unsigned char {
     BAD_MONTH = 0,
     JAN       = 1,
     FEB       = 2,
@@ -136,11 +136,11 @@ enum class LIBRARY_API DT_MONTH : unsigned char {
 // AME_STYLE: MM/DD/YYYY
 // EUR_STYLE: YYYY/MM/DD
 //
-enum class LIBRARY_API DT_DATE_STYLE : unsigned char { YYYYMMDD = 1, AME_STYLE = 2, EUR_STYLE = 3 };
+enum class DATAFRAME_API DT_DATE_STYLE : unsigned char { YYYYMMDD = 1, AME_STYLE = 2, EUR_STYLE = 3 };
 
 // ----------------------------------------------------------------------------
 
-class LIBRARY_API DateTime
+class DATAFRAME_API DateTime
 {
    public:
     using DateType        = unsigned int;        // YYYYMMDD
@@ -191,7 +191,7 @@ class LIBRARY_API DateTime
     // This guy initializes anything that needs to be initialized
     // statically.
     //
-    class LIBRARY_API DT_initializer
+    class DATAFRAME_API DT_initializer
     {
        public:
         DT_initializer() noexcept;

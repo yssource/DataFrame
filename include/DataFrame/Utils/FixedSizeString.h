@@ -55,7 +55,7 @@ namespace hmdf
 //       OF THE PROGRAMMER TO TAKE CARE OF THAT.
 //
 
-class LIBRARY_API VirtualString {
+class DATAFRAME_API VirtualString {
 public:
 
     using size_type = std::size_t;
@@ -328,7 +328,7 @@ private:
 //       responsibility of the programmer to take care of that.
 //
 template <unsigned int S>
-class LIBRARY_API FixedSizeString : public VirtualString {
+class DATAFRAME_API FixedSizeString : public VirtualString {
 
 public:
 

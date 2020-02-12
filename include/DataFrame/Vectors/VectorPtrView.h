@@ -43,7 +43,7 @@ namespace hmdf
 {
 
 template<typename T>
-class LIBRARY_API VectorPtrView {
+class DATAFRAME_API VectorPtrView {
 
 private:
 
@@ -632,7 +632,7 @@ public:
 // ----------------------------------------------------------------------------
 
 template<typename T>
-class LIBRARY_API VectorConstPtrView {
+class DATAFRAME_API VectorConstPtrView {
 
 private:
 

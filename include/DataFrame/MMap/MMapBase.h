@@ -47,7 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace hmdf
 {
 
-class LIBRARY_API MMapBase : public FileDef {
+class DATAFRAME_API MMapBase : public FileDef {
 
 public:
 

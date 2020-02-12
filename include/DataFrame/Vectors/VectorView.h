@@ -45,7 +45,7 @@ namespace hmdf
 // It also gives you STL conformant iterators.
 //
 template <typename T>
-class LIBRARY_API VectorView {
+class DATAFRAME_API VectorView {
 
 public:
 
@@ -533,7 +533,7 @@ public:
 // ----------------------------------------------------------------------------
 
 template <typename T>
-class LIBRARY_API VectorConstView {
+class DATAFRAME_API VectorConstView {
 
 public:
 
